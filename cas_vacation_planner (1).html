@@ -1,0 +1,1195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CAS Vacation Planner</title>
+<style>
+:root {
+  --bg:#FFFFFF;--bg2:#F5F6F7;--bg3:#EAECEE;--border:#D1D5DB;
+  --text:#1D2D3E;--text2:#556B82;--blue:#0070F2;--blue-light:#E1F4FF;
+  --blue-hover:#0040B0;--accent:#4CB1FF;--green:#107E3E;--green-l:#BBF0D0;
+  --green-bg:#F1FBF6;--yellow:#C95800;--yellow-l:#FFEFC4;--yellow-bg:#FEF9EE;
+  --red:#BB0000;--red-l:#FFD5D5;--red-bg:#FFF5F5;--gray:#6B7280;
+  --gray-l:#E5E7EB;--gray-bg:#F3F4F6;
+  --font:-apple-system,'72 Brand','72','Segoe UI',sans-serif;
+  --radius:8px;--shadow:0 1px 4px rgba(0,0,0,.09);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--font);background:var(--bg2);color:var(--text);min-height:100vh;}
+.header{background:var(--blue);color:#fff;height:48px;padding:0 20px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 6px rgba(0,0,0,.2);position:sticky;top:0;z-index:200;}
+.header-title{font-size:15px;font-weight:700;letter-spacing:.2px;}
+.header-sub{font-size:11px;opacity:.8;margin-top:1px;}
+.hdr-btn{padding:5px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid rgba(255,255,255,.45);background:rgba(255,255,255,.15);color:#fff;font-family:var(--font);transition:background .15s;}
+.hdr-btn:hover{background:rgba(255,255,255,.3);}
+.hdr-btn-approved.active{background:var(--green);border-color:var(--green);}
+.hdr-btn-pending.active{background:var(--yellow);border-color:var(--yellow);}
+.hdr-btn-holiday.active{background:var(--gray);border-color:var(--gray);}
+.db-status-wrap{display:flex;align-items:center;gap:6px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.1);cursor:pointer;transition:background .15s;}
+.db-status-wrap:hover{background:rgba(255,255,255,.25);}
+.db-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;background:#FFA500;}
+.db-dot.online{background:#BBF0D0;}
+.db-saving-lbl{font-size:10px;color:rgba(255,255,255,.75);}
+.db-banner{background:#FEF3E8;border-bottom:2px solid #E9730C;padding:8px 20px;display:none;align-items:center;justify-content:space-between;font-size:12px;color:#7A3800;gap:16px;flex-wrap:wrap;}
+.db-banner-btn{padding:5px 14px;background:var(--blue);color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);white-space:nowrap;transition:background .13s;}
+.db-banner-btn:hover{background:var(--blue-hover);}
+.app{display:flex;overflow:hidden;}
+.sidebar{width:255px;min-width:255px;background:var(--bg);border-right:1px solid var(--border);overflow-y:auto;display:flex;flex-direction:column;}
+.sb-sec{padding:13px 14px;border-bottom:1px solid var(--border);}
+.sb-title{font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;}
+.stat-card{background:var(--blue-light);border:1px solid var(--accent);border-radius:var(--radius);padding:10px 13px;margin-bottom:8px;}
+.stat-n{font-size:26px;font-weight:800;color:var(--blue);line-height:1;}
+.stat-l{font-size:11px;color:var(--text2);margin-top:3px;}
+.stat-sub{font-size:11px;color:var(--text2);line-height:1.5;}
+.leg-row{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text2);margin-bottom:5px;}
+.dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.dot.g{background:var(--green);}.dot.y{background:var(--yellow);}.dot.r{background:var(--red);}
+.form-grp{display:flex;flex-direction:column;gap:4px;margin-bottom:10px;}
+.form-lbl{font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.6px;}
+.form-sel,.form-inp{padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius);font-size:12px;font-family:var(--font);outline:none;background:#fff;color:var(--text);width:100%;}
+.form-sel:focus,.form-inp:focus{border-color:var(--blue);box-shadow:0 0 0 2px var(--blue-light);}
+.range-display{border:1px solid var(--border);border-radius:var(--radius);padding:8px 10px;font-size:11px;color:var(--text2);background:var(--bg2);margin-top:6px;line-height:1.6;}
+.range-display b{color:var(--text);}
+.btn-save{width:100%;padding:9px;border:none;border-radius:var(--radius);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);margin-top:8px;transition:all .13s;}
+.btn-save.approved{background:var(--green);color:#fff;}.btn-save.approved:hover{background:#0A5E2A;}
+.btn-save.pending{background:var(--yellow);color:#fff;}.btn-save.pending:hover{background:#A04800;}
+.btn-save.holiday{background:var(--gray);color:#fff;}.btn-save.holiday:hover{background:#4B5563;}
+.btn-save:disabled{background:var(--bg3);color:var(--text2);cursor:not-allowed;}
+.btn-clear{width:100%;padding:7px;border:1px solid var(--border);border-radius:var(--radius);font-size:12px;font-weight:500;cursor:pointer;font-family:var(--font);background:#fff;color:var(--text2);margin-top:4px;transition:background .13s;}
+.btn-clear:hover{background:var(--bg3);}
+.info-box{background:var(--blue-light);border:1px solid var(--accent);border-radius:var(--radius);padding:8px 10px;font-size:11px;color:var(--blue);line-height:1.5;margin-top:4px;}
+.warn-box{background:var(--red-bg);border:1px solid var(--red-l);border-radius:var(--radius);padding:8px 10px;font-size:11px;color:var(--red);line-height:1.5;margin-top:4px;}
+.main{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:14px;}
+.cal-card{background:var(--bg);border-radius:12px;box-shadow:var(--shadow);overflow:hidden;flex-shrink:0;}
+.cal-hdr{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-bottom:1px solid var(--border);}
+.cal-nav{display:flex;align-items:center;gap:10px;}
+.nav-btn{width:30px;height:30px;border:1px solid var(--border);border-radius:6px;background:#fff;cursor:pointer;font-size:17px;display:flex;align-items:center;justify-content:center;transition:all .13s;}
+.nav-btn:hover{background:var(--blue-light);border-color:var(--blue);}
+.month-lbl{font-size:15px;font-weight:700;min-width:155px;text-align:center;}
+.mode-pill{padding:4px 12px;border-radius:20px;font-size:11px;font-weight:700;}
+.mode-pill.consultation{background:var(--blue-light);color:var(--blue);}
+.mode-pill.add-approved{background:var(--green-l);color:var(--green);}
+.mode-pill.add-pending{background:var(--yellow-l);color:var(--yellow);}
+.today-btn{padding:5px 11px;border:1px solid var(--border);border-radius:6px;background:#fff;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);transition:background .13s;}
+.today-btn:hover{background:var(--blue-light);border-color:var(--blue);}
+.cal-body{padding:8px;}
+.weekdays{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:2px;}
+.wd{text-align:center;font-size:10px;font-weight:700;color:var(--text2);padding:4px 0;text-transform:uppercase;letter-spacing:.4px;}
+.days-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;}
+.day{min-height:64px;border-radius:7px;padding:4px 5px;cursor:pointer;transition:border .1s,transform .1s;position:relative;border:2px solid transparent;background:var(--bg);}
+.day:hover:not(.other-m):not(.wknd){border-color:var(--blue);transform:scale(1.025);z-index:2;}
+.day.other-m{opacity:.2;pointer-events:none;}
+.day.wknd{background:var(--bg2)!important;cursor:default;}
+.day.wknd:hover{transform:none!important;border-color:transparent!important;}
+.day.is-today{box-shadow:inset 0 0 0 2px var(--blue);}
+.day.sel-start,.day.sel-end{border-color:var(--blue)!important;}
+.day.in-range{background:#EBF4FF!important;border-color:#BDD9F8!important;}
+.day.clr-g{background:var(--green-bg);}.day.clr-y{background:var(--yellow-bg);}
+.day.clr-r{background:var(--red-bg);}.day.clr-h{background:var(--gray-bg);}
+.day-n{font-size:12px;font-weight:700;color:var(--text);}
+.day.other-m .day-n{color:var(--text2);}
+.day-badges{display:flex;flex-wrap:wrap;gap:2px;margin-top:3px;}
+.badge{font-size:9px;font-weight:800;padding:1px 4px;border-radius:7px;display:inline-flex;align-items:center;gap:2px;}
+.badge.g{background:var(--green-l);color:var(--green);}.badge.y{background:var(--yellow-l);color:var(--yellow);}
+.badge.r{background:var(--red-l);color:var(--red);}.badge.pct-p{background:#E8E8E8;color:#555;font-size:8px;}
+.badge.hol{background:var(--gray-l);color:var(--gray);font-size:8px;}
+.badge.vac-badge-sm{background:var(--blue-light);color:var(--blue);font-size:8px;}
+.abs-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-top:4px;}
+.abs-card{border-radius:8px;padding:9px 5px;text-align:center;border:1px solid;}
+.abs-card.abs-total{background:#FFF5F5;border-color:#FFD5D5;}
+.abs-card.abs-hol{background:var(--gray-bg);border-color:var(--gray-l);}
+.abs-card.abs-vac{background:var(--blue-light);border-color:#B3D9FF;}
+.abs-n{font-size:17px;font-weight:800;line-height:1;}
+.abs-card.abs-total .abs-n{color:var(--red);}
+.abs-card.abs-hol .abs-n{color:var(--gray);}
+.abs-card.abs-vac .abs-n{color:var(--blue);}
+.abs-l{font-size:9px;color:var(--text2);margin-top:3px;line-height:1.3;font-weight:600;}
+.avail-pct-main{font-size:28px;font-weight:800;line-height:1;}
+.pct-card.g .avail-pct-main{color:var(--green);}
+.pct-card.y .avail-pct-main{color:var(--yellow);}
+.pct-card.r .avail-pct-main{color:var(--red);}
+.day-dots{display:flex;flex-wrap:wrap;gap:2px;margin-top:4px;}
+.vdot{width:5px;height:5px;border-radius:50%;}
+.vdot.a{background:var(--green);}.vdot.p{background:var(--yellow);}.vdot.h{background:var(--gray);}
+.rpanel{width:290px;min-width:290px;background:var(--bg);border-left:1px solid var(--border);overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:14px;}
+.rpanel-title{font-size:14px;font-weight:700;color:var(--text);}
+.rpanel-date{font-size:11px;color:var(--text2);margin-top:2px;}
+.pct-card{border-radius:10px;padding:14px;text-align:center;border:2px solid;}
+.pct-card.g{background:var(--green-bg);border-color:var(--green-l);}
+.pct-card.y{background:var(--yellow-bg);border-color:var(--yellow-l);}
+.pct-card.r{background:var(--red-bg);border-color:var(--red-l);}
+.pct-big{font-size:30px;font-weight:800;line-height:1;}
+.pct-card.g .pct-big{color:var(--green);}.pct-card.y .pct-big{color:var(--yellow);}.pct-card.r .pct-big{color:var(--red);}
+.pct-lbl{font-size:11px;color:var(--text2);margin-top:4px;}
+.pct-avail{font-size:11px;font-weight:600;margin-top:4px;}
+.pct-card.g .pct-avail{color:var(--green);}.pct-card.y .pct-avail{color:var(--yellow);}.pct-card.r .pct-avail{color:var(--red);}
+.detail-block{border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:6px;}
+.detail-hdr{padding:7px 12px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;}
+.detail-hdr.a{background:var(--green-l);color:var(--green);}.detail-hdr.p{background:var(--yellow-l);color:var(--yellow);}
+.detail-body{padding:8px 12px;}
+.detail-person{font-size:12px;padding:3px 0;border-bottom:1px solid var(--bg2);color:var(--text);}
+.detail-person:last-child{border-bottom:none;}
+.summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.sum-card{border-radius:8px;padding:10px;text-align:center;border:1px solid;}
+.sum-card.a{background:var(--green-bg);border-color:var(--green-l);}
+.sum-card.p{background:var(--yellow-bg);border-color:var(--yellow-l);}
+.sum-n{font-size:20px;font-weight:800;}
+.sum-card.a .sum-n{color:var(--green);}.sum-card.p .sum-n{color:var(--yellow);}
+.sum-l{font-size:10px;color:var(--text2);margin-top:2px;}
+.vac-list-card{background:var(--bg);border-radius:12px;box-shadow:var(--shadow);}
+.vac-list-hdr{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;font-size:13px;font-weight:700;}
+.filter-btns{display:flex;gap:4px;}
+.filter-btn{padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:#fff;font-family:var(--font);transition:all .12s;color:var(--text2);}
+.filter-btn:hover{background:var(--blue-light);border-color:var(--blue);color:var(--blue);}
+.filter-btn.active{background:var(--blue);border-color:var(--blue);color:#fff;}
+.vac-item{display:flex;align-items:center;gap:10px;padding:9px 16px;border-bottom:1px solid var(--bg2);font-size:12px;transition:background .1s;}
+.vac-item:hover{background:var(--bg2);}
+.vac-item:last-child{border-bottom:none;}
+.vac-badge{padding:2px 8px;border-radius:12px;font-size:10px;font-weight:800;flex-shrink:0;letter-spacing:.3px;}
+.vac-badge.approved{background:var(--green-l);color:var(--green);}
+.vac-badge.pending{background:var(--yellow-l);color:var(--yellow);}
+.vac-badge.holiday{background:var(--gray-l);color:var(--gray);}
+.vac-name{font-weight:600;flex:1;color:var(--text);}
+.vac-dates{color:var(--text2);font-size:11px;flex-shrink:0;}
+.vac-del{background:none;border:none;cursor:pointer;color:var(--text2);padding:3px 5px;border-radius:4px;font-size:13px;opacity:0;transition:all .1s;}
+.vac-item:hover .vac-del{opacity:1;}
+.vac-del:hover{background:var(--red-l);color:var(--red);}
+.vac-edit{background:none;border:none;cursor:pointer;color:var(--text2);padding:3px 5px;border-radius:4px;font-size:13px;opacity:0;transition:all .1s;}
+.vac-item:hover .vac-edit{opacity:1;}
+.vac-edit:hover{background:var(--blue-light);color:var(--blue);}
+.vac-empty{padding:20px 16px;text-align:center;font-size:12px;color:var(--text2);}
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:500;align-items:center;justify-content:center;}
+.overlay.open{display:flex;}
+.modal{background:#fff;border-radius:14px;padding:22px;width:500px;max-width:95vw;max-height:85vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.18);}
+.modal-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+.modal-title{font-size:15px;font-weight:800;}
+.modal-x{background:none;border:none;cursor:pointer;font-size:20px;color:var(--text2);padding:3px 6px;border-radius:5px;line-height:1;}
+.modal-x:hover{background:var(--bg2);}
+.db-step{display:flex;gap:12px;margin-bottom:12px;align-items:flex-start;}
+.db-step-num{width:22px;height:22px;border-radius:50%;background:var(--blue);color:#fff;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
+.db-step-txt{font-size:12px;line-height:1.6;color:var(--text);}
+.db-step-txt strong{color:var(--blue);}
+code{background:var(--bg3);padding:2px 6px;border-radius:3px;font-size:11px;font-family:'Consolas',monospace;}
+.team-search{margin-bottom:10px;}
+.team-list-wrap{max-height:360px;overflow-y:auto;}
+.member-row{display:flex;align-items:center;gap:8px;padding:7px 6px;border-radius:6px;transition:background .1s;font-size:13px;}
+.member-row:hover{background:var(--bg2);}
+.member-avatar{width:28px;height:28px;border-radius:50%;background:var(--blue-light);color:var(--blue);font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.member-name{flex:1;color:var(--text);}
+.member-add-vac{background:none;border:1px solid var(--border);cursor:pointer;padding:3px 8px;border-radius:5px;font-size:10px;font-weight:600;color:var(--blue);font-family:var(--font);transition:all .12s;white-space:nowrap;}
+.member-add-vac:hover{background:var(--blue-light);border-color:var(--blue);}
+.member-del{background:none;border:none;cursor:pointer;color:var(--text2);padding:4px 5px;border-radius:4px;font-size:13px;opacity:0;transition:all .1s;}
+.member-row:hover .member-del{opacity:1;}
+.member-del:hover{background:var(--red-l);color:var(--red);}
+.add-row{display:flex;gap:6px;margin-top:12px;}
+.add-row input{flex:1;padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius);font-size:12px;font-family:var(--font);outline:none;}
+.add-row input:focus{border-color:var(--blue);}
+.btn-add{padding:7px 14px;background:var(--blue);color:#fff;border:none;border-radius:var(--radius);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);white-space:nowrap;transition:background .13s;}
+.btn-add:hover{background:var(--blue-hover);}
+.toast{position:fixed;bottom:20px;right:20px;padding:11px 18px;border-radius:10px;font-size:12px;font-weight:600;z-index:9999;box-shadow:0 4px 18px rgba(0,0,0,.15);transform:translateY(16px);opacity:0;transition:all .25s;pointer-events:none;}
+.toast.show{transform:translateY(0);opacity:1;}
+.toast.success{background:var(--green);color:#fff;}.toast.error{background:var(--red);color:#fff;}
+.toast.info{background:var(--blue);color:#fff;}.toast.warn{background:var(--yellow);color:#fff;}
+::-webkit-scrollbar{width:5px;}
+::-webkit-scrollbar-track{background:var(--bg2);}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+.divider{height:1px;background:var(--border);margin:8px 0;}
+.section-lbl{font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;}
+.empty-state{text-align:center;padding:30px 20px;color:var(--text2);}
+.empty-state .es-icon{font-size:28px;margin-bottom:8px;}
+.empty-state .es-txt{font-size:12px;line-height:1.5;}
+/* ── ASM SEARCH MODAL ──────────────────────────── */
+.asm-search-wrap{position:relative;margin-bottom:14px;}
+.asm-dropdown{position:absolute;top:calc(100% + 4px);left:0;right:0;background:#fff;border:1px solid var(--border);border-radius:var(--radius);box-shadow:0 4px 16px rgba(0,0,0,.1);z-index:600;max-height:220px;overflow-y:auto;}
+.asm-dd-item{padding:9px 14px;font-size:13px;cursor:pointer;color:var(--text);transition:background .1s;}
+.asm-dd-item:hover{background:var(--blue-light);color:var(--blue);}
+.asm-dd-empty{color:var(--text2);cursor:default;}
+.asm-person-hdr{display:flex;align-items:center;gap:14px;padding:14px 0 12px;border-bottom:1px solid var(--border);margin-bottom:14px;}
+.asm-avatar{width:44px;height:44px;border-radius:50%;background:var(--blue-light);color:var(--blue);font-size:16px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.asm-person-name{font-size:15px;font-weight:800;color:var(--text);margin-bottom:6px;}
+.asm-person-sub{display:flex;gap:6px;flex-wrap:wrap;}
+.asm-count-badge{padding:2px 9px;border-radius:12px;font-size:10px;font-weight:700;}
+.asm-count-badge.approved{background:var(--green-l);color:var(--green);}
+.asm-count-badge.pending{background:var(--yellow-l);color:var(--yellow);}
+.asm-count-badge.holiday{background:var(--gray-l);color:var(--gray);}
+.asm-section{border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:10px;}
+.asm-section-hdr{padding:8px 14px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;}
+.asm-section-hdr.a{background:var(--green-l);color:var(--green);}
+.asm-section-hdr.p{background:var(--yellow-l);color:var(--yellow);}
+.asm-section-hdr.h{background:var(--gray-l);color:var(--gray);}
+.asm-entry{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;border-bottom:1px solid var(--bg2);font-size:12px;}
+.asm-entry:last-child{border-bottom:none;}
+.asm-entry.a{border-left:3px solid var(--green);}
+.asm-entry.p{border-left:3px solid var(--yellow);}
+.asm-entry.h{border-left:3px solid var(--gray);}
+.asm-entry-dates{color:var(--text);font-weight:500;}
+.asm-entry-days{color:var(--text2);font-size:11px;font-weight:600;background:var(--bg2);padding:2px 7px;border-radius:10px;}
+.asm-empty{text-align:center;padding:24px;font-size:12px;color:var(--text2);}
+.asm-totals-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px;}
+.asm-total-card{border-radius:8px;padding:10px 8px;text-align:center;border:1px solid;}
+.asm-total-card.a{background:var(--green-bg);border-color:var(--green-l);}
+.asm-total-card.p{background:var(--yellow-bg);border-color:var(--yellow-l);}
+.asm-total-card.h{background:var(--gray-bg);border-color:var(--gray-l);}
+.asm-total-n{font-size:20px;font-weight:800;line-height:1;}
+.asm-total-card.a .asm-total-n{color:var(--green);}
+.asm-total-card.p .asm-total-n{color:var(--yellow);}
+.asm-total-card.h .asm-total-n{color:var(--gray);}
+.asm-total-l{font-size:9px;color:var(--text2);margin-top:3px;line-height:1.3;font-weight:600;}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div>
+    <div class="header-title">CAS Vacation Planner</div>
+    <div class="header-sub">Cloud Application Services</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+    <span id="saving-lbl" class="db-saving-lbl"></span>
+    <div class="db-status-wrap" onclick="openDbConfig()" title="Database settings">
+      <div class="db-dot" id="db-dot"></div>
+      <span id="db-status-lbl" style="color:#fff">Local only</span>
+    </div>
+    <button class="hdr-btn hdr-btn-approved" id="hdr-btn-approved" onclick="toggleMode('add-approved')">+ Add Approved</button>
+    <button class="hdr-btn hdr-btn-pending"  id="hdr-btn-pending"  onclick="toggleMode('add-pending')">+ Add Pending</button>
+    <button class="hdr-btn hdr-btn-holiday"  id="hdr-btn-holiday"  onclick="toggleMode('add-holiday')">+ Add Holiday</button>
+    <button class="hdr-btn" onclick="openTeamModal()">&#9881; Manage Team</button>
+    <button class="hdr-btn" id="hdr-btn-asm-search" onclick="openAsmModal()" style="background:rgba(255,255,255,.25);border-color:rgba(255,255,255,.6)">&#128269; Buscar ASM</button>
+  </div>
+</div>
+
+<!-- DB BANNER -->
+<div class="db-banner" id="db-banner">
+  <span><strong>Shared database not configured.</strong> Data is saved locally in this browser only. Configure JSONbin.io so the whole team shares the same data.</span>
+  <button class="db-banner-btn" onclick="openDbConfig()">Configure Database</button>
+</div>
+
+<!-- APP -->
+<div class="app" id="app-wrap" style="height:calc(100vh - 48px)">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sb-sec">
+      <div class="sb-title">Team</div>
+      <div class="stat-card">
+        <div class="stat-n" id="sb-team-count">53</div>
+        <div class="stat-l">team members</div>
+      </div>
+      <div class="stat-sub">Simultaneous vacation limit:<br>
+        <strong id="sb-max-vac" style="color:var(--red)">13 people</strong> (30% of team)
+      </div>
+    </div>
+    <div class="sb-sec">
+      <div class="sb-title">Legenda — Disponibilidade</div>
+      <div class="leg-row"><div class="dot g"></div> Disponível — menos de 15% ausente</div>
+      <div class="leg-row"><div class="dot y"></div> Atenção — entre 15% e 29% ausente</div>
+      <div class="leg-row"><div class="dot r"></div> Bloqueado — 30% ou mais ausente</div>
+      <div style="font-size:10px;color:var(--text2);margin-top:4px;line-height:1.5">(feriados + férias inclusos)</div>
+      <div class="divider"></div>
+      <div class="sb-title" style="margin-bottom:6px">Tipos de ausência</div>
+      <div class="leg-row"><div class="dot g"></div> Férias aprovadas</div>
+      <div class="leg-row"><div class="dot" style="background:var(--yellow);width:10px;height:10px;border-radius:50%;flex-shrink:0"></div> Férias solicitadas</div>
+      <div class="leg-row"><div class="dot" style="background:var(--gray);width:10px;height:10px;border-radius:50%;flex-shrink:0"></div> Feriado</div>
+    </div>
+    <div class="sb-sec" id="add-panel" style="display:none">
+      <div class="sb-title" id="add-panel-title">Add Approved Vacation</div>
+      <div class="form-grp">
+        <div class="form-lbl">Person</div>
+        <select class="form-sel" id="person-sel"><option value="">Select a person...</option></select>
+      </div>
+      <div class="info-box" id="add-instructions">Click on the calendar to set the start date. Click the same day again for a single day off.</div>
+      <div id="range-display" style="display:none" class="range-display"></div>
+      <div id="range-warn" style="display:none"></div>
+      <button class="btn-save approved" id="btn-save" style="display:none" onclick="saveVacation()">Save Vacation</button>
+      <button class="btn-clear" id="btn-clear-sel" style="display:none" onclick="clearSelection()">Clear Selection</button>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="cal-card">
+      <div class="cal-hdr">
+        <div class="cal-nav">
+          <button class="nav-btn" onclick="changeMonth(-1)">&#8249;</button>
+          <div class="month-lbl" id="month-lbl">May 2026</div>
+          <button class="nav-btn" onclick="changeMonth(1)">&#8250;</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="mode-pill consultation" id="mode-pill">Consultation</div>
+          <button class="today-btn" onclick="goToday()">Today</button>
+        </div>
+      </div>
+      <div class="cal-body">
+        <div class="weekdays">
+          <div class="wd">Sun</div><div class="wd">Mon</div><div class="wd">Tue</div>
+          <div class="wd">Wed</div><div class="wd">Thu</div><div class="wd">Fri</div><div class="wd">Sat</div>
+        </div>
+        <div class="days-grid" id="days-grid"></div>
+      </div>
+    </div>
+    <div class="vac-list-card">
+      <div class="vac-list-hdr">
+        <span>Registered Vacations</span>
+        <div class="filter-btns">
+          <button class="filter-btn active" id="f-all"      onclick="setFilter('all')">All</button>
+          <button class="filter-btn"        id="f-approved" onclick="setFilter('approved')">Approved</button>
+          <button class="filter-btn"        id="f-pending"  onclick="setFilter('pending')">Pending</button>
+        </div>
+      </div>
+      <div id="vac-list" style="overflow-y:scroll;height:190px"></div>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="rpanel" id="rpanel">
+    <div class="empty-state">
+      <div class="es-icon">&#128197;</div>
+      <div class="es-txt">Click on a day in the calendar to see availability and who is on vacation.</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ASM SEARCH MODAL -->
+<div class="overlay" id="asm-modal" onclick="handleAsmOverlayClick(event)">
+  <div class="modal" style="width:580px;max-height:82vh;overflow-y:auto" onclick="event.stopPropagation()">
+    <div class="modal-hdr">
+      <div class="modal-title">&#128269; Buscar ASM — Calendário Individual</div>
+      <button class="modal-x" onclick="closeAsmModal()">&#215;</button>
+    </div>
+    <div class="asm-search-wrap">
+      <input type="text" id="asm-search-inp" class="form-inp"
+        placeholder="Digite o nome do ASM..."
+        oninput="onAsmSearch()" autocomplete="off"
+        style="margin-bottom:0">
+      <div id="asm-dropdown" class="asm-dropdown"></div>
+    </div>
+    <div id="asm-results">
+      <div class="asm-empty" style="padding:32px 0">
+        Digite o nome de um membro para ver seu calendário completo.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TEAM MODAL -->
+<div class="overlay" id="team-modal">
+  <div class="modal" style="width:560px">
+    <div class="modal-hdr">
+      <div class="modal-title">Manage Team — Cloud Application Services</div>
+      <button class="modal-x" onclick="closeTeamModal()">&#215;</button>
+    </div>
+    <div class="team-search">
+      <input type="text" class="form-inp" id="team-search-inp" placeholder="Search by name..." oninput="renderTeamList()" style="margin-bottom:0">
+    </div>
+    <div class="section-lbl" id="team-count-lbl">53 members</div>
+    <div class="team-list-wrap" id="team-list-wrap"></div>
+    <div class="divider"></div>
+    <div class="section-lbl">Add Person to Team</div>
+    <div class="add-row">
+      <input type="text" id="new-member-inp" placeholder="Full name..." onkeydown="if(event.key==='Enter')addMember()">
+      <button class="btn-add" onclick="addMember()">+ Add</button>
+    </div>
+  </div>
+</div>
+
+<!-- QUICK-ADD MODAL -->
+<div class="overlay" id="quick-add-modal">
+  <div class="modal" style="width:420px">
+    <div class="modal-hdr">
+      <div class="modal-title" id="qam-title">Add Vacation</div>
+      <button class="modal-x" onclick="closeQuickAdd()">&#215;</button>
+    </div>
+    <div class="form-grp">
+      <div class="form-lbl">Person</div>
+      <input type="text" class="form-inp" id="qam-person" readonly style="background:var(--bg2)">
+    </div>
+    <div class="form-grp">
+      <div class="form-lbl">Status</div>
+      <select class="form-sel" id="qam-status">
+        <option value="approved">Approved</option>
+        <option value="pending">Pending</option>
+        <option value="holiday">Holiday</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:10px">
+      <div class="form-grp" style="flex:1">
+        <div class="form-lbl">Start Date</div>
+        <input type="date" class="form-inp" id="qam-start">
+      </div>
+      <div class="form-grp" style="flex:1">
+        <div class="form-lbl">End Date</div>
+        <input type="date" class="form-inp" id="qam-end">
+      </div>
+    </div>
+    <div id="qam-warn" style="margin-top:6px"></div>
+    <button class="btn-save approved" id="qam-save-btn" onclick="saveQuickAdd()" style="margin-top:12px">Save Vacation</button>
+  </div>
+</div>
+
+<!-- DATABASE CONFIG MODAL -->
+<div class="overlay" id="db-modal">
+  <div class="modal" style="width:500px">
+    <div class="modal-hdr">
+      <div class="modal-title">&#9729; Shared Database — JSONbin.io</div>
+      <button class="modal-x" onclick="closeDbConfig()">&#215;</button>
+    </div>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:16px;line-height:1.6">
+      Connect to <strong>JSONbin.io</strong> (free) so every team member who opens this file reads and writes to the same database. All changes — names, vacations, status — are saved automatically.
+    </p>
+    <div class="db-step">
+      <div class="db-step-num">1</div>
+      <div class="db-step-txt">Go to <strong>jsonbin.io</strong>, create a free account and sign in.</div>
+    </div>
+    <div class="db-step">
+      <div class="db-step-num">2</div>
+      <div class="db-step-txt">Click <strong>+ Create Bin</strong>. Paste as initial content and save:<br>
+        <code>{"members":[],"vacations":[]}</code><br>
+        The <strong>Bin ID</strong> appears in the URL after <code>/b/</code> — copy it.
+      </div>
+    </div>
+    <div class="db-step">
+      <div class="db-step-num">3</div>
+      <div class="db-step-txt">In the left menu click <strong>API Keys</strong> → <strong>+ CREATE KEY</strong> → <strong>Master Key</strong>. Copy the key (starts with <code>$2a$10$</code>).</div>
+    </div>
+    <div class="db-step">
+      <div class="db-step-num">4</div>
+      <div class="db-step-txt">Paste both values below, click <strong>Save &amp; Connect</strong>. Share this HTML file with the team.</div>
+    </div>
+    <div class="divider"></div>
+    <div class="form-grp">
+      <div class="form-lbl">Bin ID</div>
+      <input class="form-inp" id="db-bin-inp" placeholder="64abc1234def5678...">
+    </div>
+    <div class="form-grp">
+      <div class="form-lbl">Master Key (API Key)</div>
+      <input class="form-inp" id="db-key-inp" type="password" placeholder="$2a$10$AbCdEf...">
+    </div>
+    <div id="db-modal-msg" style="margin-top:6px"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
+      <button class="btn-clear" style="width:auto;padding:7px 18px" onclick="closeDbConfig()">Cancel</button>
+      <button class="btn-save approved" style="width:auto;margin-top:0;padding:9px 22px" onclick="saveDbConfig()">Save &amp; Connect</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════
+//  CLOUD — JSONbin.io
+// ═══════════════════════════════════════════════════
+const LS_DATA     = 'cas-vac-data';
+const LS_BIN      = 'cas-vac-binId';
+const LS_KEY      = 'cas-vac-apiKey';
+const DATA_VER    = 4; // bump this whenever INITIAL_VACATIONS is updated
+
+// ── Pre-configured credentials ───────────────────────────────────────────────
+// Embedded by the owner. Anyone who opens this file connects automatically.
+const PRESET_BIN_ID  = '6a19dc28ddf5aa59f775b2dd';
+const PRESET_API_KEY = '$2a$10$vsdM5v242gXP8vOoJNo/beHplQVl2tb8Q0ANrLybg5E9smD8kvxFi';
+// ─────────────────────────────────────────────────────────────────────────────
+const API_BASE = 'https://api.jsonbin.io/v3/b';
+
+let cfg       = { binId:'', apiKey:'' };
+let saveTimer = null;
+
+function apiHeaders(extra) {
+  const isMaster = cfg.apiKey.startsWith('$2');
+  const hdr = isMaster ? 'X-Master-Key' : 'X-Access-Key';
+  return Object.assign({ [hdr]: cfg.apiKey }, extra||{});
+}
+
+async function cloudGet() {
+  if (!cfg.binId || !cfg.apiKey) return false;
+  try {
+    const res  = await fetch(`${API_BASE}/${cfg.binId}/latest`, { headers: apiHeaders() });
+    if (!res.ok) throw new Error(res.status);
+    const json = await res.json();
+    const rec  = json.record;
+    if (rec && Array.isArray(rec.members) && Array.isArray(rec.vacations)) {
+      data = rec;
+      saveLocal();
+      setDbStatus(true);
+      setSyncLabel();
+      return true;
+    }
+    return false;
+  } catch(e) { console.error('cloudGet:', e); setDbStatus(false); return false; }
+}
+
+async function cloudPut() {
+  if (!cfg.binId || !cfg.apiKey) { saveLocal(); return; }
+  setSavingLabel(true);
+  try {
+    const res = await fetch(`${API_BASE}/${cfg.binId}`, {
+      method:'PUT',
+      headers: apiHeaders({'Content-Type':'application/json'}),
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) throw new Error(res.status);
+    saveLocal(); setDbStatus(true); setSyncLabel(); setSavingLabel(false);
+  } catch(e) {
+    saveLocal(); setSavingLabel(false);
+    showToast('Could not reach server. Changes saved locally.','warn');
+  }
+}
+
+function debounceSave() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => cloudPut(), 900);
+}
+
+function saveLocal() {
+  try { localStorage.setItem(LS_DATA, JSON.stringify(data)); } catch(e) {}
+}
+function loadLocal() {
+  try { const r=localStorage.getItem(LS_DATA); return r ? JSON.parse(r) : null; } catch(e){ return null; }
+}
+
+function setDbStatus(online) {
+  const dot = document.getElementById('db-dot');
+  const lbl = document.getElementById('db-status-lbl');
+  if (!cfg.binId) { dot.className='db-dot'; lbl.textContent='Local only'; }
+  else if (online) { dot.className='db-dot online'; lbl.textContent='Connected'; }
+  else { dot.className='db-dot'; lbl.textContent='Offline'; }
+}
+function setSyncLabel() {
+  const t = new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+  const l = document.getElementById('db-status-lbl');
+  if (l && cfg.binId) l.textContent = `Synced ${t}`;
+}
+function setSavingLabel(s) {
+  const el = document.getElementById('saving-lbl');
+  if (el) el.textContent = s ? '↻ Saving...' : '';
+}
+
+function openDbConfig() {
+  document.getElementById('db-bin-inp').value  = cfg.binId;
+  document.getElementById('db-key-inp').value  = cfg.apiKey;
+  document.getElementById('db-modal-msg').innerHTML = '';
+  document.getElementById('db-modal').classList.add('open');
+}
+function closeDbConfig() { document.getElementById('db-modal').classList.remove('open'); }
+
+async function saveDbConfig() {
+  const binId  = document.getElementById('db-bin-inp').value.trim();
+  const apiKey = document.getElementById('db-key-inp').value.trim();
+  const msg    = document.getElementById('db-modal-msg');
+  if (!binId || !apiKey) { msg.innerHTML='<div class="warn-box">Fill in both the Bin ID and the API Key.</div>'; return; }
+  cfg.binId  = binId;
+  cfg.apiKey = apiKey;
+  localStorage.setItem(LS_BIN, binId);
+  localStorage.setItem(LS_KEY, apiKey);
+  msg.innerHTML = '<div class="info-box">Connecting...</div>';
+  const ok = await cloudGet();
+  if (ok) {
+    // If remote bin is empty, push existing local data up
+    if (data.members.length === 0) {
+      data = loadLocal() || { members:[...INITIAL_MEMBERS], vacations:[] };
+      await cloudPut();
+      await cloudGet();
+    }
+    closeDbConfig();
+    document.getElementById('db-banner').style.display = 'none';
+    setDbStatus(true); renderAll();
+    showToast('Database connected! All changes are now shared with the team.','success');
+  } else {
+    cfg.binId=''; cfg.apiKey='';
+    msg.innerHTML='<div class="warn-box">Could not connect. Check your Bin ID and API Key and try again.</div>';
+  }
+}
+
+// ═══════════════════════════════════════════════════
+//  DATA & STATE
+// ═══════════════════════════════════════════════════
+const INITIAL_MEMBERS = [
+  'Abin Samuel','Alessandra Zigan','Ana Paula Cornejo Navea','Ana Rodriguez',
+  'Andre Aparecido Bueno Duraes','Andre Calderan','Andreia Mara Suzin','Anirbanjyoti Kar',
+  'Anny Arlette Abreu','Anoop Gopalakrishnan','Anurag Shrivastava','Armando Goulart',
+  'Bruna da Rosa Campos','Caique Passos','Carlos Rojas','Daniel Kiel',
+  'Diego Augusto Miquelin Costa','Eduardo Carvalho Ramos','Eduardo Santos Back','Eliana Oliveira',
+  'Erika Gutierrez','Ernesto Cardenas','Francisco Gomes','Gabriel Americo',
+  'Gabriel Henrique Mazze','Giovanna Brinkhus','Guilherme Wenzel','Harini Namilakonda',
+  'Helena Holler','Ilana Camila Fonseca da Silva','Joel Fernandes','Karim Mohamed',
+  'Leandro Barradas','Martin Chevrier','Mirian Yukiko Ito','Mohammedi Slatewala',
+  'Nived Narayanan','Paula Andrade Cardoso','Rafael Rossi','Richard Liu',
+  'Ritesh Likhdhari','Robert Magid','Rod Pobre','Roopsa Basu',
+  'Ryan Josephs','Sabrina Zucatti','Sanjay Purkar','Sharon Sequeira',
+  'Stephen Goodchild','Tamer Abdelhafez','Veronica Montoya','Vipin Nhattuvetty',
+  'Virendra Deshpande','Yathi Udayagiri'
+];
+
+function saveData() { saveLocal(); debounceSave(); }
+
+const INITIAL_VACATIONS = [{"id":"1","name":"Alessandra Zigan","start":"2026-01-01","end":"2026-01-01","status":"holiday"},{"id":"2","name":"Alessandra Zigan","start":"2026-01-19","end":"2026-01-19","status":"holiday"},{"id":"3","name":"Alessandra Zigan","start":"2026-02-16","end":"2026-02-16","status":"holiday"},{"id":"4","name":"Alessandra Zigan","start":"2026-05-25","end":"2026-05-25","status":"holiday"},{"id":"5","name":"Alessandra Zigan","start":"2026-06-19","end":"2026-06-19","status":"holiday"},{"id":"6","name":"Alessandra Zigan","start":"2026-07-04","end":"2026-07-04","status":"holiday"},{"id":"7","name":"Alessandra Zigan","start":"2026-09-07","end":"2026-09-07","status":"holiday"},{"id":"8","name":"Alessandra Zigan","start":"2026-11-11","end":"2026-11-11","status":"holiday"},{"id":"9","name":"Alessandra Zigan","start":"2026-11-20","end":"2026-11-20","status":"holiday"},{"id":"10","name":"Alessandra Zigan","start":"2026-11-26","end":"2026-11-27","status":"holiday"},{"id":"11","name":"Alessandra Zigan","start":"2026-12-24","end":"2026-12-25","status":"holiday"},{"id":"12","name":"Andre Aparecido Bueno Duraes","start":"2026-01-01","end":"2026-01-01","status":"holiday"},{"id":"13","name":"Andre Aparecido Bueno Duraes","start":"2026-02-16","end":"2026-02-18","status":"holiday"},{"id":"14","name":"Andre Aparecido Bueno Duraes","start":"2026-04-03","end":"2026-04-03","status":"holiday"},{"id":"15","name":"Andre Aparecido Bueno Duraes","start":"2026-04-21","end":"2026-04-21","status":"holiday"},{"id":"16","name":"Andre Aparecido Bueno Duraes","start":"2026-05-01","end":"2026-05-01","status":"holiday"},{"id":"17","name":"Andre Aparecido Bueno Duraes","start":"2026-06-04","end":"2026-06-04","status":"holiday"},{"id":"18","name":"Andre Aparecido Bueno Duraes","start":"2026-07-25","end":"2026-07-25","status":"holiday"},{"id":"19","name":"Andre Aparecido Bueno Duraes","start":"2026-09-07","end":"2026-09-07","status":"holiday"},{"id":"20","name":"Andre Aparecido Bueno Duraes","start":"2026-09-20","end":"2026-09-20","status":"holiday"},{"id":"21","name":"Andre Aparecido Bueno Duraes","start":"2026-10-12","end":"2026-10-12","status":"holiday"},{"id":"22","name":"Andre Aparecido Bueno Duraes","start":"2026-11-02","end":"2026-11-02","status":"holiday"},{"id":"23","name":"Andre Aparecido Bueno Duraes","start":"2026-11-15","end":"2026-11-15","status":"holiday"},{"id":"24","name":"Andre Aparecido Bueno Duraes","start":"2026-11-20","end":"2026-11-20","status":"holiday"},{"id":"25","name":"Andre Aparecido Bueno Duraes","start":"2026-12-08","end":"2026-12-08","status":"holiday"},{"id":"26","name":"Andre Aparecido Bueno Duraes","start":"2026-12-22","end":"2026-12-31","status":"approved"},{"id":"27","name":"Andre Calderan","start":"2026-01-01","end":"2026-01-01","status":"holiday"},{"id":"28","name":"Andre Calderan","start":"2026-01-25","end":"2026-01-25","status":"holiday"},{"id":"29","name":"Andre Calderan","start":"2026-02-16","end":"2026-02-18","status":"holiday"},{"id":"30","name":"Andre Calderan","start":"2026-04-03","end":"2026-04-03","status":"holiday"},{"id":"31","name":"Andre Calderan","start":"2026-04-21","end":"2026-04-21","status":"holiday"},{"id":"32","name":"Andre Calderan","start":"2026-05-01","end":"2026-05-01","status":"holiday"},{"id":"33","name":"Andre Calderan","start":"2026-06-04","end":"2026-06-04","status":"holiday"},{"id":"34","name":"Andre Calderan","start":"2026-07-09","end":"2026-07-09","status":"holiday"},{"id":"35","name":"Andre Calderan","start":"2026-09-07","end":"2026-09-07","status":"holiday"},{"id":"36","name":"Andre Calderan","start":"2026-10-12","end":"2026-10-12","status":"holiday"},{"id":"37","name":"Andre Calderan","start":"2026-11-02","end":"2026-11-02","status":"holiday"},{"id":"38","name":"Andre Calderan","start":"2026-11-15","end":"2026-11-15","status":"holiday"},{"id":"39","name":"Andre Calderan","start":"2026-11-20","end":"2026-11-20","status":"holiday"},{"id":"40","name":"Andre Calderan","start":"2026-12-25","end":"2026-12-25","status":"holiday"},{"id":"41","name":"Andreia Mara Suzin","start":"2026-01-01","end":"2026-01-01","status":"holiday"},{"id":"42","name":"Andreia Mara Suzin","start":"2026-02-16","end":"2026-02-16","status":"holiday"},{"id":"43","name":"Andreia Mara Suzin","start":"2026-04-03","end":"2026-04-03","status":"holiday"},{"id":"44","name":"Andreia Mara Suzin","start":"2026-04-21","end":"2026-04-21","status":"holiday"},{"id":"45","name":"Andreia Mara Suzin","start":"2026-05-01","end":"2026-05-01","status":"holiday"},{"id":"46","name":"Andreia Mara Suzin","start":"2026-06-04","end":"2026-06-04","status":"holiday"},{"id":"47","name":"Andreia Mara Suzin","start":"2026-07-25","end":"2026-07-25","status":"holiday"},{"id":"48","name":"Andreia Mara Suzin","start":"2026-09-07","end":"2026-09-07","status":"holiday"},{"id":"49","name":"Andreia Mara Suzin","start":"2026-09-20","end":"2026-09-20","status":"holiday"},{"id":"50","name":"Andreia Mara Suzin","start":"2026-10-12","end":"2026-10-12","status":"holiday"},{"id":"51","name":"Andreia Mara Suzin","start":"2026-11-02","end":"2026-11-02","status":"holiday"},{"id":"52","name":"Andreia Mara Suzin","start":"2026-11-15","end":"2026-11-15","status":"holiday"},{"id":"53","name":"Andreia Mara Suzin","start":"2026-11-20","end":"2026-11-20","status":"holiday"},{"id":"54","name":"Andreia Mara Suzin","start":"2026-12-08","end":"2026-12-08","status":"holiday"},{"id":"55","name":"Andreia Mara Suzin","start":"2026-12-25","end":"2026-12-25","status":"holiday"},{"id":"56","name":"Anny Arlette Abreu","start":"2026-01-15","end":"2026-01-15","status":"holiday"},{"id":"57","name":"Anny Arlette Abreu","start":"2026-01-26","end":"2026-01-26","status":"holiday"},{"id":"58","name":"Anny Arlette Abreu","start":"2026-05-27","end":"2026-05-28","status":"pending"},{"id":"59","name":"Anny Arlette Abreu","start":"2026-11-16","end":"2026-11-20","status":"pending"},{"id":"60","name":"Anoop Gopalakrishnan","start":"2026-06-05","end":"2026-06-24","status":"approved"},{"id":"61","name":"Anurag Shrivastava","start":"2026-01-15","end":"2026-01-15","status":"holiday"},{"id":"62","name":"Anurag Shrivastava","start":"2026-01-26","end":"2026-01-26","status":"holiday"},{"id":"63","name":"Bruna da Rosa Campos","start":"2026-01-15","end":"2026-01-15","status":"holiday"},{"id":"64","name":"Bruna da Rosa Campos","start":"2026-01-26","end":"2026-01-26","status":"holiday"},{"id":"65","name":"Bruna da Rosa Campos","start":"2026-06-10","end":"2026-06-12","status":"approved"},{"id":"66","name":"Carlos Rojas","start":"2026-01-01","end":"2026-01-01","status":"holiday"},{"id":"67","name":"Carlos Rojas","start":"2026-01-19","end":"2026-01-19","status":"holiday"},{"id":"68","name":"Carlos Rojas","start":"2026-02-16","end":"2026-02-16","status":"holiday"},{"id":"69","name":"Carlos Rojas","start":"2026-05-25","end":"2026-05-25","status":"holiday"},{"id":"70","name":"Carlos Rojas","start":"2026-06-19","end":"2026-06-19","status":"holiday"},{"id":"71","name":"Carlos Rojas","start":"2026-07-04","end":"2026-07-04","status":"holiday"},{"id":"72","name":"Carlos Rojas","start":"2026-08-04","end":"2026-08-07","status":"pending"},{"id":"73","name":"Carlos Rojas","start":"2026-08-10","end":"2026-08-10","status":"pending"},{"id":"74","name":"Carlos Rojas","start":"2026-09-07","end":"2026-09-07","status":"holiday"},{"id":"75","name":"Carlos Rojas","start":"2026-10-05","end":"2026-10-09","status":"pending"},{"id":"76","name":"Carlos Rojas","start":"2026-10-12","end":"2026-10-16","status":"pending"},{"id":"77","name":"Carlos Rojas","start":"2026-11-11","end":"2026-11-11","status":"holiday"},{"id":"78","name":"Carlos Rojas","start":"2026-11-26","end":"2026-11-27","status":"holiday"},{"id":"79","name":"Carlos Rojas","start":"2026-12-24","end":"2026-12-25","status":"holiday"},{"id":"80","name":"Daniel Kiel","start":"2026-01-01","end":"2026-01-01","status":"holiday"},{"id":"81","name":"Daniel Kiel","start":"2026-01-19","end":"2026-01-19","status":"holiday"},{"id":"82","name":"Daniel Kiel","start":"2026-02-16","end":"2026-02-16","status":"holiday"},{"id":"83","name":"Daniel Kiel","start":"2026-05-25","end":"2026-05-25","status":"holiday"},{"id":"84","name":"Daniel Kiel","start":"2026-06-19","end":"2026-06-19","status":"holiday"},{"id":"85","name":"Daniel Kiel","start":"2026-07-04","end":"2026-07-04","status":"holiday"},{"id":"86","name":"Daniel Kiel","start":"2026-09-07","end":"2026-09-07","status":"holiday"},{"id":"87","name":"Daniel Kiel","start":"2026-11-11","end":"2026-11-11","status":"holiday"},{"id":"88","name":"Daniel Kiel","start":"2026-11-26","end":"2026-11-27","status":"holiday"},{"id":"89","name":"Daniel Kiel","start":"2026-12-24","end":"2026-12-25","status":"holiday"},{"id":"90","name":"Diego Augusto Miquelin Costa","start":"2026-01-01","end":"2026-01-01","status":"holiday"},{"id":"91","name":"Diego Augusto Miquelin Costa","start":"2026-01-19","end":"2026-01-19","status":"holiday"},{"id":"92","name":"Diego Augusto Miquelin Costa","start":"2026-02-16","end":"2026-02-16","status":"holiday"},{"id":"93","name":"Diego Augusto Miquelin Costa","start":"2026-05-25","end":"2026-05-25","status":"holiday"},{"id":"94","name":"Diego Augusto Miquelin Costa","start":"2026-06-19","end":"2026-06-19","status":"holiday"},{"id":"95","name":"Diego Augusto Miquelin Costa","start":"2026-07-04","end":"2026-07-04","status":"holiday"},{"id":"96","name":"Diego Augusto Miquelin Costa","start":"2026-09-07","end":"2026-09-07","status":"holiday"},{"id":"97","name":"Diego Augusto Miquelin Costa","start":"2026-11-11","end":"2026-11-11","status":"holiday"},{"id":"98","name":"Diego Augusto Miquelin Costa","start":"2026-11-26","end":"2026-11-27","status":"holiday"},{"id":"99","name":"Diego Augusto Miquelin Costa","start":"2026-12-24","end":"2026-12-25","status":"holiday"},{"id":"100","name":"Eduardo Carvalho Ramos","start":"2026-01-01","end":"2026-01-01","status":"holiday"},{"id":"101","name":"Eduardo Carvalho Ramos","start":"2026-01-31","end":"2026-02-14","status":"approved"},{"id":"102","name":"Eduardo Carvalho Ramos","start":"2026-02-16","end":"2026-02-18","status":"holiday"},{"id":"103","name":"Eduardo Carvalho Ramos","start":"2026-03-02","end":"2026-03-06","status":"approved"},{"id":"104","name":"Eduardo Carvalho Ramos","start":"2026-04-03","end":"2026-04-03","status":"holiday"},{"id":"105","name":"Eduardo Carvalho Ramos","start":"2026-04-21","end":"2026-04-21","status":"holiday"},{"id":"106","name":"Eduardo Carvalho Ramos","start":"2026-05-01","end":"2026-05-01","status":"holiday"},{"id":"107","name":"Eduardo Carvalho Ramos","start":"2026-06-04","end":"2026-06-04","status":"holiday"},{"id":"108","name":"Eduardo Carvalho Ramos","start":"2026-07-25","end":"2026-07-25","status":"holiday"},{"id":"109","name":"Eduardo Carvalho Ramos","start":"2026-09-07","end":"2026-09-07","status":"holiday"},{"id":"110","name":"Eduardo Carvalho Ramos","start":"2026-09-20","end":"2026-09-20","status":"holiday"},{"id":"111","name":"Eduardo Carvalho Ramos","start":"2026-10-12","end":"2026-10-12","status":"holiday"},{"id":"112","name":"Eduardo Carvalho Ramos","start":"2026-11-02","end":"2026-11-02","status":"holiday"},{"id":"113","name":"Eduardo Carvalho Ramos","start":"2026-11-15","end":"2026-11-15","status":"holiday"},{"id":"114","name":"Eduardo Carvalho Ramos","start":"2026-11-20","end":"2026-11-20","status":"holiday"},{"id":"115","name":"Eduardo Carvalho Ramos","start":"2026-12-08","end":"2026-12-08","status":"holiday"},{"id":"116","name":"Eduardo Carvalho Ramos","start":"2026-12-25","end":"2026-12-25","status":"holiday"},{"id":"117","name":"Eduardo Santos Back","start":"2026-01-01","end":"2026-01-01","status":"holiday"},{"id":"118","name":"Eduardo Santos Back","start":"2026-02-16","end":"2026-02-18","status":"holiday"},{"id":"119","name":"Eduardo Santos Back","start":"2026-04-03","end":"2026-04-03","status":"holiday"},{"id":"120","name":"Eduardo Santos Back","start":"2026-04-21","end":"2026-04-21","status":"holiday"},{"id":"121","name":"Eduardo Santos Back","start":"2026-05-01","end":"2026-05-01","status":"holiday"},{"id":"122","name":"Eduardo Santos Back","start":"2026-06-04","end":"2026-06-04","status":"holiday"},{"id":"123","name":"Eduardo Santos Back","start":"2026-07-25","end":"2026-07-25","status":"holiday"},{"id":"124","name":"Eduardo Santos Back","start":"2026-07-27","end":"2026-07-31","status":"pending"},{"id":"125","name":"Eduardo Santos Back","start":"2026-09-07","end":"2026-09-07","status":"holiday"},{"id":"126","name":"Eduardo Santos Back","start":"2026-09-20","end":"2026-09-20","status":"holiday"},{"id":"127","name":"Eduardo Santos Back","start":"2026-10-12","end":"2026-10-12","status":"holiday"},{"id":"128","name":"Eduardo Santos Back","start":"2026-11-02","end":"2026-11-02","status":"holiday"},{"id":"129","name":"Eduardo Santos Back","start":"2026-11-15","end":"2026-11-15","status":"holiday"},{"id":"130","name":"Eduardo Santos Back","start":"2026-11-20","end":"2026-11-20","status":"holiday"},{"id":"131","name":"Eduardo Santos Back","start":"2026-12-08","end":"2026-12-08","status":"holiday"},{"id":"132","name":"Eduardo Santos Back","start":"2026-12-25","end":"2026-12-25","status":"holiday"},{"id":"133","name":"Eliana Oliveira","start":"2026-01-01","end":"2026-01-01","status":"holiday"},{"id":"134","name":"Eliana Oliveira","start":"2026-01-25","end":"2026-01-25","status":"holiday"},{"id":"135","name":"Eliana Oliveira","start":"2026-02-16","end":"2026-02-18","status":"holiday"},{"id":"136","name":"Eliana Oliveira","start":"2026-04-03","end":"2026-04-03","status":"holiday"},{"id":"137","name":"Eliana Oliveira","start":"2026-04-21","end":"2026-04-21","status":"holiday"},{"id":"138","name":"Eliana Oliveira","start":"2026-04-24","end":"2026-04-24","status":"approved"},{"id":"139","name":"Eliana Oliveira","start":"2026-05-01","end":"2026-05-01","status":"holiday"},{"id":"140","name":"Eliana Oliveira","start":"2026-05-11","end":"2026-05-26","status":"approved"},{"id":"141","name":"Eliana Oliveira","start":"2026-06-04","end":"2026-06-04","status":"holiday"},{"id":"142","name":"Eliana Oliveira","start":"2026-07-09","end":"2026-07-09","status":"holiday"},{"id":"143","name":"Eliana Oliveira","start":"2026-07-10","end":"2026-07-10","status":"approved"},{"id":"144","name":"Eliana Oliveira","start":"2026-09-07","end":"2026-09-07","status":"holiday"},{"id":"145","name":"Eliana Oliveira","start":"2026-09-08","end":"2026-09-11","status":"pending"},{"id":"146","name":"Eliana Oliveira","start":"2026-10-12","end":"2026-10-12","status":"holiday"},{"id":"147","name":"Eliana Oliveira","start":"2026-11-02","end":"2026-11-02","status":"holiday"},{"id":"148","name":"Eliana Oliveira","start":"2026-11-12","end":"2026-11-13","status":"approved"},{"id":"149","name":"Eliana Oliveira","start":"2026-11-15","end":"2026-11-15","status":"holiday"},{"id":"150","name":"Eliana Oliveira","start":"2026-11-16","end":"2026-11-19","status":"approved"},{"id":"151","name":"Eliana Oliveira","start":"2026-11-20","end":"2026-11-20","status":"holiday"},{"id":"152","name":"Eliana Oliveira","start":"2026-12-25","end":"2026-12-25","status":"holiday"},{"id":"153","name":"Eliana Oliveira","start":"2026-12-26","end":"2026-12-31","status":"pending"},{"id":"154","name":"Erika Gutierrez","start":"2026-01-12","end":"2026-01-12","status":"holiday"},{"id":"155","name":"Erika Gutierrez","start":"2026-03-24","end":"2026-03-24","status":"holiday"},{"id":"156","name":"Erika Gutierrez","start":"2026-04-17","end":"2026-04-18","status":"holiday"},{"id":"157","name":"Erika Gutierrez","start":"2026-05-01","end":"2026-05-01","status":"holiday"},{"id":"158","name":"Ernesto Cardenas","start":"2026-01-19","end":"2026-01-23","status":"approved"},{"id":"159","name":"Ernesto Cardenas","start":"2026-01-26","end":"2026-01-26","status":"approved"},{"id":"160","name":"Ernesto Cardenas","start":"2026-02-02","end":"2026-02-02","status":"holiday"},{"id":"161","name":"Ernesto Cardenas","start":"2026-03-21","end":"2026-03-21","status":"holiday"},{"id":"162","name":"Ernesto Cardenas","start":"2026-04-02","end":"2026-04-03","status":"holiday"},{"id":"163","name":"Ernesto Cardenas","start":"2026-05-01","end":"2026-05-01","status":"holiday"},{"id":"164","name":"Ernesto Cardenas","start":"2026-05-04","end":"2026-05-08","status":"pending"},{"id":"165","name":"Ernesto Cardenas","start":"2026-06-30","end":"2026-07-03","status":"pending"},{"id":"166","name":"Ernesto Cardenas","start":"2026-07-06","end":"2026-07-06","status":"pending"},{"id":"167","name":"Ernesto Cardenas","start":"2026-08-25","end":"2026-08-26","status":"pending"},{"id":"168","name":"Ernesto Cardenas","start":"2026-08-31","end":"2026-08-31","status":"pending"},{"id":"169","name":"Ernesto Cardenas","start":"2026-09-04","end":"2026-09-04","status":"pending"},{"id":"170","name":"Ernesto Cardenas","start":"2026-09-07","end":"2026-09-11","status":"pending"},{"id":"171","name":"Ernesto Cardenas","start":"2026-09-16","end":"2026-09-16","status":"holiday"},{"id":"172","name":"Ernesto Cardenas","start":"2026-10-12","end":"2026-10-12","status":"holiday"},{"id":"173","name":"Ernesto Cardenas","start":"2026-11-02","end":"2026-11-02","status":"holiday"},{"id":"174","name":"Ernesto Cardenas","start":"2026-11-15","end":"2026-11-15","status":"holiday"},{"id":"175","name":"Ernesto Cardenas","start":"2026-11-25","end":"2026-11-27","status":"pending"},{"id":"176","name":"Ernesto Cardenas","start":"2026-11-30","end":"2026-12-02","status":"pending"},{"id":"177","name":"Ernesto Cardenas","start":"2026-12-21","end":"2026-12-31","status":"pending"},{"id":"178","name":"Francisco Gomes","start":"2026-01-01","end":"2026-01-01","status":"holiday"},{"id":"179","name":"Francisco Gomes","start":"2026-01-25","end":"2026-01-25","status":"holiday"},{"id":"180","name":"Francisco Gomes","start":"2026-02-16","end":"2026-02-18","status":"holiday"},{"id":"181","name":"Francisco Gomes","start":"2026-03-17","end":"2026-04-02","status":"approved"},{"id":"182","name":"Francisco Gomes","start":"2026-04-03","end":"2026-04-03","status":"holiday"},{"id":"183","name":"Francisco Gomes","start":"2026-04-21","end":"2026-04-21","status":"holiday"},{"id":"184","name":"Francisco Gomes","start":"2026-05-01","end":"2026-05-01","status":"holiday"},{"id":"185","name":"Francisco Gomes","start":"2026-06-04","end":"2026-06-04","status":"holiday"},{"id":"186","name":"Francisco Gomes","start":"2026-07-09","end":"2026-07-09","status":"holiday"},{"id":"187","name":"Francisco Gomes","start":"2026-09-07","end":"2026-09-07","status":"holiday"},{"id":"188","name":"Francisco Gomes","start":"2026-10-12","end":"2026-10-12","status":"holiday"},{"id":"189","name":"Francisco Gomes","start":"2026-11-02","end":"2026-11-02","status":"holiday"},{"id":"190","name":"Francisco Gomes","start":"2026-11-15","end":"2026-11-15","status":"holiday"},{"id":"191","name":"Francisco Gomes","start":"2026-11-20","end":"2026-11-20","status":"holiday"},{"id":"192","name":"Francisco Gomes","start":"2026-12-25","end":"2026-12-25","status":"holiday"},{"id":"193","name":"Gabriel Americo","start":"2026-01-01","end":"2026-01-01","status":"holiday"},{"id":"194","name":"Gabriel Americo","start":"2026-02-16","end":"2026-02-18","status":"holiday"},{"id":"195","name":"Gabriel Americo","start":"2026-04-03","end":"2026-04-03","status":"holiday"},{"id":"196","name":"Gabriel Americo","start":"2026-04-21","end":"2026-04-21","status":"holiday"},{"id":"197","name":"Gabriel Americo","start":"2026-05-01","end":"2026-05-01","status":"holiday"},{"id":"198","name":"Gabriel Americo","start":"2026-06-04","end":"2026-06-04","status":"holiday"},{"id":"199","name":"Gabriel Americo","start":"2026-06-08","end":"2026-06-12","status":"approved"},{"id":"200","name":"Gabriel Americo","start":"2026-07-25","end":"2026-07-25","status":"holiday"},{"id":"201","name":"Gabriel Americo","start":"2026-09-07","end":"2026-09-07","status":"holiday"},{"id":"202","name":"Gabriel Americo","start":"2026-09-20","end":"2026-09-20","status":"holiday"},{"id":"203","name":"Gabriel Americo","start":"2026-10-12","end":"2026-10-12","status":"holiday"},{"id":"204","name":"Gabriel Americo","start":"2026-11-02","end":"2026-11-02","status":"holiday"},{"id":"205","name":"Gabriel Americo","start":"2026-11-15","end":"2026-11-15","status":"holiday"},{"id":"206","name":"Gabriel Americo","start":"2026-11-20","end":"2026-11-20","status":"holiday"},{"id":"207","name":"Gabriel Americo","start":"2026-12-08","end":"2026-12-08","status":"holiday"},{"id":"208","name":"Gabriel Americo","start":"2026-12-25","end":"2026-12-25","status":"holiday"},{"id":"209","name":"Gabriel Henrique Mazze","start":"2026-01-01","end":"2026-01-01","status":"holiday"},{"id":"210","name":"Gabriel Henrique Mazze","start":"2026-01-25","end":"2026-01-25","status":"holiday"},{"id":"211","name":"Gabriel Henrique Mazze","start":"2026-02-16","end":"2026-02-18","status":"holiday"},{"id":"212","name":"Gabriel Henrique Mazze","start":"2026-04-03","end":"2026-04-03","status":"holiday"},{"id":"213","name":"Gabriel Henrique Mazze","start":"2026-04-21","end":"2026-04-21","status":"holiday"},{"id":"214","name":"Gabriel Henrique Mazze","start":"2026-05-01","end":"2026-05-01","status":"holiday"},{"id":"215","name":"Gabriel Henrique Mazze","start":"2026-06-04","end":"2026-06-04","status":"holiday"},{"id":"216","name":"Gabriel Henrique Mazze","start":"2026-07-09","end":"2026-07-09","status":"holiday"},{"id":"217","name":"Gabriel Henrique Mazze","start":"2026-07-13","end":"2026-07-22","status":"approved"},{"id":"218","name":"Gabriel Henrique Mazze","start":"2026-09-07","end":"2026-09-07","status":"holiday"},{"id":"219","name":"Gabriel Henrique Mazze","start":"2026-10-12","end":"2026-10-12","status":"holiday"},{"id":"220","name":"Gabriel Henrique Mazze","start":"2026-11-02","end":"2026-11-02","status":"holiday"},{"id":"221","name":"Gabriel Henrique Mazze","start":"2026-11-15","end":"2026-11-15","status":"holiday"},{"id":"222","name":"Gabriel Henrique Mazze","start":"2026-11-20","end":"2026-11-20","status":"holiday"},{"id":"223","name":"Gabriel Henrique Mazze","start":"2026-12-25","end":"2026-12-25","status":"holiday"},{"id":"224","name":"Giovanna Brinkhus","start":"2026-01-01","end":"2026-01-01","status":"holiday"},{"id":"225","name":"Giovanna Brinkhus","start":"2026-02-16","end":"2026-02-18","status":"holiday"},{"id":"226","name":"Giovanna Brinkhus","start":"2026-02-19","end":"2026-02-20","status":"approved"},{"id":"227","name":"Giovanna Brinkhus","start":"2026-04-03","end":"2026-04-03","status":"holiday"},{"id":"228","name":"Giovanna Brinkhus","start":"2026-04-21","end":"2026-04-21","status":"holiday"},{"id":"229","name":"Giovanna Brinkhus","start":"2026-05-01","end":"2026-05-01","status":"holiday"},{"id":"230","name":"Giovanna Brinkhus","start":"2026-06-04","end":"2026-06-04","status":"holiday"},{"id":"231","name":"Giovanna Brinkhus","start":"2026-07-25","end":"2026-07-25","status":"holiday"},{"id":"232","name":"Giovanna Brinkhus","start":"2026-09-07","end":"2026-09-07","status":"holiday"},{"id":"233","name":"Giovanna Brinkhus","start":"2026-09-20","end":"2026-09-20","status":"holiday"},{"id":"234","name":"Giovanna Brinkhus","start":"2026-10-12","end":"2026-10-12","status":"holiday"},{"id":"235","name":"Giovanna Brinkhus","start":"2026-11-02","end":"2026-11-02","status":"holiday"},{"id":"236","name":"Giovanna Brinkhus","start":"2026-11-15","end":"2026-11-15","status":"holiday"},{"id":"237","name":"Giovanna Brinkhus","start":"2026-11-20","end":"2026-11-20","status":"holiday"},{"id":"238","name":"Giovanna Brinkhus","start":"2026-12-08","end":"2026-12-08","status":"holiday"},{"id":"239","name":"Giovanna Brinkhus","start":"2026-12-25","end":"2026-12-25","status":"holiday"},{"id":"240","name":"Ilana Camila Fonseca da Silva","start":"2026-01-01","end":"2026-01-01","status":"holiday"},{"id":"241","name":"Ilana Camila Fonseca da Silva","start":"2026-01-19","end":"2026-01-19","status":"holiday"},{"id":"242","name":"Ilana Camila Fonseca da Silva","start":"2026-05-25","end":"2026-05-25","status":"holiday"},{"id":"243","name":"Ilana Camila Fonseca da Silva","start":"2026-05-26","end":"2026-05-29","status":"approved"},{"id":"244","name":"Ilana Camila Fonseca da Silva","start":"2026-06-01","end":"2026-06-05","status":"approved"},{"id":"245","name":"Ilana Camila Fonseca da Silva","start":"2026-06-08","end":"2026-06-12","status":"approved"},{"id":"246","name":"Ilana Camila Fonseca da Silva","start":"2026-06-15","end":"2026-06-15","status":"approved"},{"id":"247","name":"Ilana Camila Fonseca da Silva","start":"2026-06-19","end":"2026-06-19","status":"holiday"},{"id":"248","name":"Ilana Camila Fonseca da Silva","start":"2026-07-03","end":"2026-07-03","status":"holiday"},{"id":"249","name":"Ilana Camila Fonseca da Silva","start":"2026-09-07","end":"2026-09-07","status":"holiday"},{"id":"250","name":"Ilana Camila Fonseca da Silva","start":"2026-11-11","end":"2026-11-11","status":"holiday"},{"id":"251","name":"Ilana Camila Fonseca da Silva","start":"2026-11-26","end":"2026-11-27","status":"holiday"},{"id":"252","name":"Ilana Camila Fonseca da Silva","start":"2026-12-24","end":"2026-12-25","status":"holiday"},{"id":"253","name":"Joel Fernandes","start":"2026-01-01","end":"2026-01-02","status":"approved"},{"id":"254","name":"Joel Fernandes","start":"2026-01-05","end":"2026-01-05","status":"approved"},{"id":"255","name":"Leandro Barradas","start":"2026-01-01","end":"2026-01-01","status":"holiday"},{"id":"256","name":"Leandro Barradas","start":"2026-02-16","end":"2026-02-18","status":"holiday"},{"id":"257","name":"Leandro Barradas","start":"2026-02-19","end":"2026-03-15","status":"approved"},{"id":"258","name":"Leandro Barradas","start":"2026-04-03","end":"2026-04-03","status":"holiday"},{"id":"259","name":"Leandro Barradas","start":"2026-04-21","end":"2026-04-21","status":"holiday"},{"id":"260","name":"Leandro Barradas","start":"2026-05-01","end":"2026-05-01","status":"holiday"},{"id":"261","name":"Leandro Barradas","start":"2026-06-04","end":"2026-06-04","status":"holiday"},{"id":"262","name":"Leandro Barradas","start":"2026-07-25","end":"2026-07-25","status":"holiday"},{"id":"263","name":"Leandro Barradas","start":"2026-09-07","end":"2026-09-07","status":"holiday"},{"id":"264","name":"Leandro Barradas","start":"2026-09-20","end":"2026-09-20","status":"holiday"},{"id":"265","name":"Leandro Barradas","start":"2026-10-12","end":"2026-10-12","status":"holiday"},{"id":"266","name":"Leandro Barradas","start":"2026-11-02","end":"2026-11-02","status":"holiday"},{"id":"267","name":"Leandro Barradas","start":"2026-11-15","end":"2026-11-15","status":"holiday"},{"id":"268","name":"Leandro Barradas","start":"2026-11-20","end":"2026-11-20","status":"holiday"},{"id":"269","name":"Leandro Barradas","start":"2026-12-08","end":"2026-12-08","status":"holiday"},{"id":"270","name":"Leandro Barradas","start":"2026-12-25","end":"2026-12-25","status":"holiday"},{"id":"271","name":"Martin Chevrier","start":"2026-01-01","end":"2026-01-01","status":"holiday"},{"id":"272","name":"Mirian Yukiko Ito","start":"2026-01-01","end":"2026-01-01","status":"holiday"},{"id":"273","name":"Mohammedi Slatewala","start":"2026-06-15","end":"2026-06-19","status":"pending"},{"id":"274","name":"Mohammedi Slatewala","start":"2026-06-22","end":"2026-06-25","status":"pending"},{"id":"275","name":"Nived Narayanan","start":"2026-05-14","end":"2026-05-19","status":"approved"},{"id":"276","name":"Rafael Rossi","start":"2026-01-01","end":"2026-01-01","status":"holiday"},{"id":"277","name":"Rafael Rossi","start":"2026-02-16","end":"2026-02-18","status":"holiday"},{"id":"278","name":"Rafael Rossi","start":"2026-02-19","end":"2026-02-24","status":"approved"},{"id":"279","name":"Rafael Rossi","start":"2026-03-30","end":"2026-04-02","status":"approved"},{"id":"280","name":"Rafael Rossi","start":"2026-04-03","end":"2026-04-03","status":"holiday"},{"id":"281","name":"Rafael Rossi","start":"2026-04-21","end":"2026-04-21","status":"holiday"},{"id":"282","name":"Rafael Rossi","start":"2026-05-01","end":"2026-05-01","status":"holiday"},{"id":"283","name":"Rafael Rossi","start":"2026-05-11","end":"2026-05-15","status":"approved"},{"id":"284","name":"Rafael Rossi","start":"2026-06-04","end":"2026-06-04","status":"holiday"},{"id":"285","name":"Rafael Rossi","start":"2026-07-25","end":"2026-07-25","status":"holiday"},{"id":"286","name":"Rafael Rossi","start":"2026-09-07","end":"2026-09-07","status":"holiday"},{"id":"287","name":"Rafael Rossi","start":"2026-09-20","end":"2026-09-20","status":"holiday"},{"id":"288","name":"Rafael Rossi","start":"2026-10-12","end":"2026-10-12","status":"holiday"},{"id":"289","name":"Rafael Rossi","start":"2026-10-30","end":"2026-10-30","status":"pending"},{"id":"290","name":"Rafael Rossi","start":"2026-11-02","end":"2026-11-02","status":"holiday"},{"id":"291","name":"Rafael Rossi","start":"2026-11-03","end":"2026-11-06","status":"pending"},{"id":"292","name":"Rafael Rossi","start":"2026-11-15","end":"2026-11-15","status":"holiday"},{"id":"293","name":"Rafael Rossi","start":"2026-11-20","end":"2026-11-20","status":"holiday"},{"id":"294","name":"Rafael Rossi","start":"2026-12-08","end":"2026-12-08","status":"holiday"},{"id":"295","name":"Rafael Rossi","start":"2026-12-25","end":"2026-12-25","status":"holiday"},{"id":"296","name":"Richard Liu","start":"2026-01-01","end":"2026-01-01","status":"holiday"},{"id":"297","name":"Robert Magid","start":"2026-05-18","end":"2026-05-18","status":"holiday"},{"id":"298","name":"Robert Magid","start":"2026-06-24","end":"2026-06-24","status":"holiday"},{"id":"299","name":"Robert Magid","start":"2026-07-01","end":"2026-07-01","status":"holiday"},{"id":"300","name":"Robert Magid","start":"2026-08-25","end":"2026-09-06","status":"pending"},{"id":"301","name":"Robert Magid","start":"2026-09-07","end":"2026-09-07","status":"holiday"},{"id":"302","name":"Robert Magid","start":"2026-09-08","end":"2026-09-11","status":"pending"},{"id":"303","name":"Robert Magid","start":"2026-10-12","end":"2026-10-12","status":"holiday"},{"id":"304","name":"Rod Pobre","start":"2026-01-01","end":"2026-01-01","status":"holiday"},{"id":"305","name":"Rod Pobre","start":"2026-01-19","end":"2026-01-19","status":"holiday"},{"id":"306","name":"Rod Pobre","start":"2026-02-16","end":"2026-02-16","status":"holiday"},{"id":"307","name":"Rod Pobre","start":"2026-04-02","end":"2026-04-03","status":"approved"},{"id":"308","name":"Rod Pobre","start":"2026-04-06","end":"2026-04-06","status":"approved"},{"id":"309","name":"Rod Pobre","start":"2026-05-25","end":"2026-05-25","status":"holiday"},{"id":"310","name":"Rod Pobre","start":"2026-06-19","end":"2026-06-19","status":"holiday"},{"id":"311","name":"Rod Pobre","start":"2026-07-04","end":"2026-07-04","status":"holiday"},{"id":"312","name":"Rod Pobre","start":"2026-09-07","end":"2026-09-07","status":"holiday"},{"id":"313","name":"Rod Pobre","start":"2026-11-11","end":"2026-11-11","status":"holiday"},{"id":"314","name":"Rod Pobre","start":"2026-11-20","end":"2026-11-20","status":"holiday"},{"id":"315","name":"Rod Pobre","start":"2026-11-26","end":"2026-11-27","status":"holiday"},{"id":"316","name":"Rod Pobre","start":"2026-12-24","end":"2026-12-25","status":"holiday"},{"id":"317","name":"Roopsa Basu","start":"2026-03-19","end":"2026-04-02","status":"approved"},{"id":"318","name":"Ryan Josephs","start":"2026-03-19","end":"2026-04-02","status":"approved"},{"id":"319","name":"Sanjay Purkar","start":"2026-02-02","end":"2026-02-03","status":"approved"},{"id":"320","name":"Sharon Sequeira","start":"2026-01-01","end":"2026-01-01","status":"holiday"},{"id":"321","name":"Sharon Sequeira","start":"2026-05-25","end":"2026-05-25","status":"holiday"},{"id":"322","name":"Sharon Sequeira","start":"2026-06-19","end":"2026-06-19","status":"holiday"},{"id":"323","name":"Sharon Sequeira","start":"2026-07-04","end":"2026-07-04","status":"holiday"},{"id":"324","name":"Sharon Sequeira","start":"2026-09-07","end":"2026-09-07","status":"holiday"},{"id":"325","name":"Sharon Sequeira","start":"2026-11-11","end":"2026-11-11","status":"holiday"},{"id":"326","name":"Sharon Sequeira","start":"2026-11-26","end":"2026-11-27","status":"holiday"},{"id":"327","name":"Sharon Sequeira","start":"2026-12-24","end":"2026-12-25","status":"holiday"},{"id":"328","name":"Tamer Abdelhafez","start":"2026-01-01","end":"2026-01-01","status":"holiday"},{"id":"329","name":"Tamer Abdelhafez","start":"2026-04-03","end":"2026-04-03","status":"holiday"},{"id":"330","name":"Tamer Abdelhafez","start":"2026-04-06","end":"2026-04-06","status":"holiday"},{"id":"331","name":"Tamer Abdelhafez","start":"2026-05-18","end":"2026-05-18","status":"holiday"},{"id":"332","name":"Tamer Abdelhafez","start":"2026-06-22","end":"2026-06-23","status":"pending"},{"id":"333","name":"Tamer Abdelhafez","start":"2026-06-24","end":"2026-06-24","status":"holiday"},{"id":"334","name":"Tamer Abdelhafez","start":"2026-06-25","end":"2026-06-26","status":"pending"},{"id":"335","name":"Tamer Abdelhafez","start":"2026-06-29","end":"2026-06-30","status":"pending"},{"id":"336","name":"Tamer Abdelhafez","start":"2026-07-01","end":"2026-07-01","status":"holiday"},{"id":"337","name":"Tamer Abdelhafez","start":"2026-07-02","end":"2026-07-03","status":"pending"},{"id":"338","name":"Tamer Abdelhafez","start":"2026-07-27","end":"2026-07-31","status":"pending"},{"id":"339","name":"Tamer Abdelhafez","start":"2026-08-03","end":"2026-08-03","status":"holiday"},{"id":"340","name":"Tamer Abdelhafez","start":"2026-08-04","end":"2026-08-07","status":"pending"},{"id":"341","name":"Tamer Abdelhafez","start":"2026-09-07","end":"2026-09-07","status":"holiday"},{"id":"342","name":"Tamer Abdelhafez","start":"2026-09-30","end":"2026-09-30","status":"holiday"},{"id":"343","name":"Tamer Abdelhafez","start":"2026-10-12","end":"2026-10-12","status":"holiday"},{"id":"344","name":"Tamer Abdelhafez","start":"2026-11-11","end":"2026-11-11","status":"holiday"},{"id":"345","name":"Tamer Abdelhafez","start":"2026-12-25","end":"2026-12-26","status":"holiday"},{"id":"346","name":"Veronica Montoya","start":"2026-01-01","end":"2026-01-01","status":"holiday"},{"id":"347","name":"Veronica Montoya","start":"2026-01-12","end":"2026-01-12","status":"holiday"},{"id":"348","name":"Veronica Montoya","start":"2026-03-23","end":"2026-03-23","status":"holiday"},{"id":"349","name":"Veronica Montoya","start":"2026-04-02","end":"2026-04-03","status":"holiday"},{"id":"350","name":"Veronica Montoya","start":"2026-05-01","end":"2026-05-01","status":"holiday"},{"id":"351","name":"Veronica Montoya","start":"2026-05-18","end":"2026-05-18","status":"holiday"},{"id":"352","name":"Veronica Montoya","start":"2026-05-29","end":"2026-05-29","status":"approved"},{"id":"353","name":"Veronica Montoya","start":"2026-06-08","end":"2026-06-08","status":"holiday"},{"id":"354","name":"Veronica Montoya","start":"2026-06-15","end":"2026-06-15","status":"holiday"},{"id":"355","name":"Veronica Montoya","start":"2026-06-29","end":"2026-06-29","status":"holiday"},{"id":"356","name":"Veronica Montoya","start":"2026-07-20","end":"2026-07-20","status":"holiday"},{"id":"357","name":"Veronica Montoya","start":"2026-08-07","end":"2026-08-07","status":"holiday"},{"id":"358","name":"Veronica Montoya","start":"2026-08-17","end":"2026-08-17","status":"holiday"},{"id":"359","name":"Veronica Montoya","start":"2026-10-12","end":"2026-10-12","status":"holiday"},{"id":"360","name":"Veronica Montoya","start":"2026-11-02","end":"2026-11-02","status":"holiday"},{"id":"361","name":"Veronica Montoya","start":"2026-11-16","end":"2026-11-16","status":"holiday"},{"id":"362","name":"Veronica Montoya","start":"2026-12-08","end":"2026-12-08","status":"holiday"},{"id":"363","name":"Veronica Montoya","start":"2026-12-25","end":"2026-12-25","status":"holiday"},{"id":"364","name":"Veronica Montoya","start":"2026-12-28","end":"2026-12-31","status":"pending"},{"id":"365","name":"Virendra Deshpande","start":"2026-01-15","end":"2026-01-15","status":"holiday"},{"id":"366","name":"Virendra Deshpande","start":"2026-01-22","end":"2026-01-22","status":"approved"},{"id":"367","name":"Virendra Deshpande","start":"2026-01-26","end":"2026-01-26","status":"holiday"},{"id":"368","name":"Yathi Udayagiri","start":"2026-01-01","end":"2026-01-01","status":"holiday"},{"id":"369","name":"Yathi Udayagiri","start":"2026-01-19","end":"2026-01-19","status":"holiday"},{"id":"370","name":"Yathi Udayagiri","start":"2026-05-25","end":"2026-05-25","status":"holiday"},{"id":"371","name":"Yathi Udayagiri","start":"2026-05-26","end":"2026-05-29","status":"approved"},{"id":"372","name":"Yathi Udayagiri","start":"2026-06-01","end":"2026-06-05","status":"approved"},{"id":"373","name":"Yathi Udayagiri","start":"2026-06-08","end":"2026-06-12","status":"approved"},{"id":"374","name":"Yathi Udayagiri","start":"2026-06-15","end":"2026-06-15","status":"approved"},{"id":"375","name":"Yathi Udayagiri","start":"2026-06-19","end":"2026-06-19","status":"holiday"},{"id":"376","name":"Yathi Udayagiri","start":"2026-07-03","end":"2026-07-03","status":"holiday"},{"id":"377","name":"Yathi Udayagiri","start":"2026-09-07","end":"2026-09-07","status":"holiday"},{"id":"378","name":"Yathi Udayagiri","start":"2026-11-11","end":"2026-11-11","status":"holiday"},{"id":"379","name":"Yathi Udayagiri","start":"2026-11-26","end":"2026-11-27","status":"holiday"},{"id":"380","name":"Yathi Udayagiri","start":"2026-12-24","end":"2026-12-25","status":"holiday"},{"id":"381","name":"Ana Rodriguez","start":"2026-02-16","end":"2026-02-20","status":"approved"},{"id":"382","name":"Ana Rodriguez","start":"2026-03-27","end":"2026-03-27","status":"approved"},{"id":"383","name":"Ana Rodriguez","start":"2026-04-03","end":"2026-04-03","status":"holiday"},{"id":"384","name":"Ana Rodriguez","start":"2026-04-13","end":"2026-04-16","status":"approved"},{"id":"385","name":"Ana Rodriguez","start":"2026-04-21","end":"2026-04-21","status":"holiday"},{"id":"386","name":"Ana Rodriguez","start":"2026-05-01","end":"2026-05-01","status":"holiday"},{"id":"387","name":"Ana Rodriguez","start":"2026-06-04","end":"2026-06-04","status":"holiday"},{"id":"388","name":"Ana Rodriguez","start":"2026-09-07","end":"2026-09-07","status":"holiday"},{"id":"389","name":"Ana Rodriguez","start":"2026-10-12","end":"2026-10-12","status":"holiday"},{"id":"390","name":"Ana Rodriguez","start":"2026-10-15","end":"2026-10-16","status":"pending"},{"id":"391","name":"Ana Rodriguez","start":"2026-11-02","end":"2026-11-02","status":"holiday"},{"id":"392","name":"Ana Rodriguez","start":"2026-11-03","end":"2026-11-19","status":"pending"},{"id":"393","name":"Ana Rodriguez","start":"2026-11-20","end":"2026-11-20","status":"holiday"},{"id":"394","name":"Armando Goulart","start":"2026-04-03","end":"2026-04-03","status":"holiday"},{"id":"395","name":"Armando Goulart","start":"2026-04-21","end":"2026-04-21","status":"holiday"},{"id":"396","name":"Armando Goulart","start":"2026-05-01","end":"2026-05-01","status":"holiday"},{"id":"397","name":"Armando Goulart","start":"2026-05-15","end":"2026-05-15","status":"approved"},{"id":"398","name":"Armando Goulart","start":"2026-06-04","end":"2026-06-04","status":"holiday"},{"id":"399","name":"Armando Goulart","start":"2026-08-11","end":"2026-08-18","status":"approved"},{"id":"400","name":"Armando Goulart","start":"2026-09-07","end":"2026-09-07","status":"holiday"},{"id":"401","name":"Armando Goulart","start":"2026-10-12","end":"2026-10-12","status":"holiday"},{"id":"402","name":"Armando Goulart","start":"2026-11-02","end":"2026-11-02","status":"holiday"},{"id":"403","name":"Armando Goulart","start":"2026-11-20","end":"2026-11-20","status":"holiday"},{"id":"404","name":"Caique Passos","start":"2026-04-03","end":"2026-04-03","status":"holiday"},{"id":"405","name":"Caique Passos","start":"2026-04-21","end":"2026-04-21","status":"holiday"},{"id":"406","name":"Caique Passos","start":"2026-05-01","end":"2026-05-01","status":"holiday"},{"id":"407","name":"Caique Passos","start":"2026-06-04","end":"2026-06-04","status":"holiday"},{"id":"408","name":"Caique Passos","start":"2026-09-07","end":"2026-09-07","status":"holiday"},{"id":"409","name":"Caique Passos","start":"2026-10-12","end":"2026-10-12","status":"holiday"},{"id":"410","name":"Caique Passos","start":"2026-11-02","end":"2026-11-02","status":"holiday"},{"id":"411","name":"Caique Passos","start":"2026-11-20","end":"2026-11-20","status":"holiday"},{"id":"412","name":"Guilherme Wenzel","start":"2026-04-03","end":"2026-04-03","status":"holiday"},{"id":"413","name":"Guilherme Wenzel","start":"2026-04-20","end":"2026-04-20","status":"approved"},{"id":"414","name":"Guilherme Wenzel","start":"2026-04-21","end":"2026-04-21","status":"holiday"},{"id":"415","name":"Guilherme Wenzel","start":"2026-04-22","end":"2026-04-24","status":"approved"},{"id":"416","name":"Guilherme Wenzel","start":"2026-05-01","end":"2026-05-01","status":"holiday"},{"id":"417","name":"Guilherme Wenzel","start":"2026-06-04","end":"2026-06-04","status":"holiday"},{"id":"418","name":"Guilherme Wenzel","start":"2026-06-16","end":"2026-06-16","status":"approved"},{"id":"419","name":"Guilherme Wenzel","start":"2026-09-07","end":"2026-09-07","status":"holiday"},{"id":"420","name":"Guilherme Wenzel","start":"2026-10-12","end":"2026-10-12","status":"holiday"},{"id":"421","name":"Guilherme Wenzel","start":"2026-11-02","end":"2026-11-02","status":"holiday"},{"id":"422","name":"Guilherme Wenzel","start":"2026-11-20","end":"2026-11-20","status":"holiday"},{"id":"423","name":"Helena Holler","start":"2026-02-09","end":"2026-02-24","status":"approved"},{"id":"424","name":"Helena Holler","start":"2026-04-03","end":"2026-04-03","status":"holiday"},{"id":"425","name":"Helena Holler","start":"2026-04-21","end":"2026-04-21","status":"holiday"},{"id":"426","name":"Helena Holler","start":"2026-05-01","end":"2026-05-01","status":"holiday"},{"id":"427","name":"Helena Holler","start":"2026-06-04","end":"2026-06-04","status":"holiday"},{"id":"428","name":"Helena Holler","start":"2026-09-07","end":"2026-09-07","status":"holiday"},{"id":"429","name":"Helena Holler","start":"2026-10-12","end":"2026-10-12","status":"holiday"},{"id":"430","name":"Helena Holler","start":"2026-11-02","end":"2026-11-02","status":"holiday"},{"id":"431","name":"Helena Holler","start":"2026-11-20","end":"2026-11-20","status":"holiday"}];
+let data  = loadLocal() || { members:[...INITIAL_MEMBERS], vacations:[...INITIAL_VACATIONS] };
+let state = { mode:'consultation', year:2026, month:4, selStart:null, selEnd:null, selPerson:'', filter:'all', selectedDay:null };
+
+// ═══════════════════════════════════════════════════
+//  DATE HELPERS
+// ═══════════════════════════════════════════════════
+function toISO(y,m,d){ return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`; }
+function parseISO(s){ const[y,m,d]=s.split('-').map(Number); return{y,m:m-1,d}; }
+function isWeekend(s){ const{y,m,d}=parseISO(s); const w=new Date(y,m,d).getDay(); return w===0||w===6; }
+function isToday(s){ const n=new Date(); return s===toISO(n.getFullYear(),n.getMonth(),n.getDate()); }
+function compareDates(a,b){ return a<b?-1:a>b?1:0; }
+function formatDisplay(s){
+  if(!s)return''; const{y,m,d}=parseISO(s);
+  return `${d} ${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m]} ${y}`;
+}
+function formatFull(s){
+  if(!s)return''; const{y,m,d}=parseISO(s);
+  const mn=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const wd=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  return `${wd[new Date(y,m,d).getDay()]}, ${mn[m]} ${d}, ${y}`;
+}
+function countWorkDays(start,end){
+  let c=0; const{y:sy,m:sm,d:sd}=parseISO(start); const{y:ey,m:em,d:ed}=parseISO(end);
+  let cur=new Date(sy,sm,sd); const last=new Date(ey,em,ed);
+  while(cur<=last){const w=cur.getDay();if(w!==0&&w!==6)c++;cur.setDate(cur.getDate()+1);}
+  return c;
+}
+function inRange(dateStr,start,end){
+  if(!start||!end)return false;
+  const[a,b]=compareDates(start,end)<=0?[start,end]:[end,start];
+  return dateStr>=a&&dateStr<=b;
+}
+
+// ═══════════════════════════════════════════════════
+//  ANALYTICS
+// ═══════════════════════════════════════════════════
+function getDayStats(dateStr){
+  const total=data.members.length; let approved=[],pending=[],holiday=[];
+  data.vacations.forEach(v=>{
+    if(inRange(dateStr,v.start,v.end)){
+      if(v.status==='approved')approved.push(v.name);
+      else if(v.status==='pending')pending.push(v.name);
+      else if(v.status==='holiday')holiday.push(v.name);
+    }
+  });
+  const aPct=total?(approved.length/total)*100:0;
+  const pPct=total?(pending.length/total)*100:0;
+  const holPct=total?(holiday.length/total)*100:0;
+  const vacPct=total?((approved.length+pending.length)/total)*100:0;
+  // Unique absent people (a person on vacation AND holiday counts once)
+  const absentSet=new Set([...approved,...pending,...holiday]);
+  const absPct=total?(absentSet.size/total)*100:0;
+  const availPct=100-absPct;
+  // Color for vacation limit (existing logic, approved only)
+  let color='g'; if(aPct>=30)color='r'; else if(aPct>=15)color='y';
+  // Color for overall availability (all absences)
+  let availColor='g'; if(absPct>=30)availColor='r'; else if(absPct>=15)availColor='y';
+  return{approved,pending,holiday,aPct,pPct,holPct,vacPct,absPct,availPct,absentSet,total,color,availColor};
+}
+function getMaxPctInRange(start,end){
+  if(!start||!end)return{aPct:0,color:'g'};
+  const[a,b]=compareDates(start,end)<=0?[start,end]:[end,start];
+  let maxPct=0;
+  const{y:sy,m:sm,d:sd}=parseISO(a); const{y:ey,m:em,d:ed}=parseISO(b);
+  let cur=new Date(sy,sm,sd); const last=new Date(ey,em,ed);
+  while(cur<=last){
+    const iso=toISO(cur.getFullYear(),cur.getMonth(),cur.getDate());
+    if(!isWeekend(iso)){const s=getDayStats(iso);if(s.aPct>maxPct)maxPct=s.aPct;}
+    cur.setDate(cur.getDate()+1);
+  }
+  let color='g'; if(maxPct>=30)color='r'; else if(maxPct>=15)color='y';
+  return{aPct:maxPct,color};
+}
+
+// ═══════════════════════════════════════════════════
+//  RENDERING
+// ═══════════════════════════════════════════════════
+const MONTH_NAMES=['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+function renderCalendar(){
+  const{year,month}=state;
+  document.getElementById('month-lbl').textContent=`${MONTH_NAMES[month]} ${year}`;
+  const firstDay=new Date(year,month,1).getDay();
+  const daysInMonth=new Date(year,month+1,0).getDate();
+  const daysInPrev=new Date(year,month,0).getDate();
+  const grid=document.getElementById('days-grid'); grid.innerHTML='';
+  const cells=Math.ceil((firstDay+daysInMonth)/7)*7;
+  for(let i=0;i<cells;i++){
+    const dayEl=document.createElement('div'); dayEl.className='day';
+    let dateStr,isOther=false;
+    if(i<firstDay){
+      const d=daysInPrev-firstDay+i+1;
+      dateStr=toISO(month===0?year-1:year,month===0?11:month-1,d);
+      isOther=true; dayEl.classList.add('other-m');
+    } else if(i>=firstDay+daysInMonth){
+      const d=i-firstDay-daysInMonth+1;
+      dateStr=toISO(month===11?year+1:year,month===11?0:month+1,d);
+      isOther=true; dayEl.classList.add('other-m');
+    } else { dateStr=toISO(year,month,i-firstDay+1); }
+    const weekend=isWeekend(dateStr);
+    if(weekend)dayEl.classList.add('wknd');
+    if(isToday(dateStr))dayEl.classList.add('is-today');
+    if(!isOther&&!weekend){
+      if(state.selStart&&state.selEnd){
+        const[a,b]=compareDates(state.selStart,state.selEnd)<=0?[state.selStart,state.selEnd]:[state.selEnd,state.selStart];
+        if(dateStr===a)dayEl.classList.add('sel-start');
+        else if(dateStr===b)dayEl.classList.add('sel-end');
+        else if(dateStr>a&&dateStr<b)dayEl.classList.add('in-range');
+      } else if(state.selStart&&dateStr===state.selStart) dayEl.classList.add('sel-start');
+      const stats=getDayStats(dateStr);
+      if(stats.absentSet.size>0){
+        dayEl.classList.add(`clr-${stats.availColor}`);
+      }
+      const dn=document.createElement('div'); dn.className='day-n'; dn.textContent=parseISO(dateStr).d; dayEl.appendChild(dn);
+      if(stats.absentSet.size>0){
+        const badges=document.createElement('div'); badges.className='day-badges';
+        // Main: overall availability %
+        const bMain=document.createElement('span');
+        bMain.className=`badge ${stats.availColor}`;
+        bMain.textContent=`${Math.round(stats.availPct)}% disp.`;
+        badges.appendChild(bMain);
+        // Holiday breakdown
+        if(stats.holiday.length){
+          const bH=document.createElement('span');
+          bH.className='badge hol';
+          bH.textContent=`${Math.round(stats.holPct)}% fer.`;
+          badges.appendChild(bH);
+        }
+        // Vacation breakdown
+        if(stats.approved.length||stats.pending.length){
+          const bV=document.createElement('span');
+          bV.className='badge vac-badge-sm';
+          bV.textContent=`${Math.round(stats.vacPct)}% fér.`;
+          badges.appendChild(bV);
+        }
+        dayEl.appendChild(badges);
+        const dots=document.createElement('div'); dots.className='day-dots';
+        stats.approved.slice(0,12).forEach(()=>{const d=document.createElement('div');d.className='vdot a';dots.appendChild(d);});
+        stats.pending.slice(0,8).forEach(()=>{const d=document.createElement('div');d.className='vdot p';dots.appendChild(d);});
+        stats.holiday.slice(0,8).forEach(()=>{const d=document.createElement('div');d.className='vdot h';dots.appendChild(d);});
+        dayEl.appendChild(dots);
+      }
+      dayEl.dataset.date=dateStr;
+      dayEl.addEventListener('click',()=>handleDayClick(dateStr));
+    } else {
+      const dn=document.createElement('div'); dn.className='day-n';
+      if(weekend)dn.style.opacity='.45';
+      dn.textContent=parseISO(dateStr).d; dayEl.appendChild(dn);
+    }
+    grid.appendChild(dayEl);
+  }
+}
+
+function renderSidebar(){
+  const total=data.members.length, maxVac=Math.floor(total*0.30);
+  document.getElementById('sb-team-count').textContent=total;
+  document.getElementById('sb-max-vac').textContent=`${maxVac} people`;
+  document.getElementById('hdr-btn-approved').classList.toggle('active',state.mode==='add-approved');
+  document.getElementById('hdr-btn-pending').classList.toggle('active',state.mode==='add-pending');
+  document.getElementById('hdr-btn-holiday').classList.toggle('active',state.mode==='add-holiday');
+  const pill=document.getElementById('mode-pill');
+  const pm={consultation:['consultation','Consultation'],'add-approved':['add-approved','Adding Approved'],'add-pending':['add-pending','Adding Pending'],'add-holiday':['add-holiday','Adding Holiday']};
+  pill.className=`mode-pill ${pm[state.mode][0]}`; pill.textContent=pm[state.mode][1];
+  const addPanel=document.getElementById('add-panel');
+  if(state.mode==='consultation'){addPanel.style.display='none'; return;}
+  addPanel.style.display='block';
+  document.getElementById('add-panel-title').textContent=
+    state.mode==='add-approved'?'Add Approved Vacation':state.mode==='add-pending'?'Add Pending Vacation':'Add Holiday';
+  const sel=document.getElementById('person-sel');
+  sel.innerHTML='<option value="">Select a person...</option>';
+  [...data.members].sort().forEach(m=>{
+    const opt=document.createElement('option'); opt.value=m; opt.textContent=m;
+    if(m===state.selPerson)opt.selected=true; sel.appendChild(opt);
+  });
+  const saveBtn=document.getElementById('btn-save');
+  saveBtn.className=`btn-save ${state.mode==='add-approved'?'approved':state.mode==='add-pending'?'pending':'holiday'}`;
+  saveBtn.textContent=state.mode==='add-approved'?'Save Approved Vacation':state.mode==='add-pending'?'Save Pending Vacation':'Save Holiday';
+  updateRangeDisplay();
+}
+
+function updateRangeDisplay(){
+  const instrEl=document.getElementById('add-instructions');
+  const rangeEl=document.getElementById('range-display');
+  const warnEl=document.getElementById('range-warn');
+  const saveBtn=document.getElementById('btn-save');
+  const clearBtn=document.getElementById('btn-clear-sel');
+  if(!state.selStart){
+    instrEl.style.display='block'; instrEl.textContent='Click on the calendar to set the start date. Click the same day again for a single day off.';
+    rangeEl.style.display='none'; warnEl.style.display='none'; saveBtn.style.display='none'; clearBtn.style.display='none'; return;
+  }
+  instrEl.style.display=state.selEnd?'none':'block';
+  if(!state.selEnd) instrEl.textContent=`Start: ${formatDisplay(state.selStart)}. Click another day to set the end date, or the same day for a single day.`;
+  if(state.selStart&&state.selEnd){
+    const[a,b]=compareDates(state.selStart,state.selEnd)<=0?[state.selStart,state.selEnd]:[state.selEnd,state.selStart];
+    const wd=countWorkDays(a,b); const rs=getMaxPctInRange(a,b);
+    rangeEl.style.display='block';
+    rangeEl.innerHTML=a===b
+      ?`<b>Single day:</b> ${formatDisplay(a)}<br><b>Peak in period:</b> ${Math.round(rs.aPct)}% of team on vacation`
+      :`<b>Start:</b> ${formatDisplay(a)}<br><b>End:</b> ${formatDisplay(b)}<br><b>Work days:</b> ${wd}<br><b>Peak in period:</b> ${Math.round(rs.aPct)}% of team on vacation`;
+    warnEl.innerHTML='';
+    if(rs.aPct>=30){warnEl.innerHTML=`<div class="warn-box">Warning: ${Math.round(rs.aPct)}% of the team is already approved for vacation on at least one day in this period. The limit is 30%.</div>`;warnEl.style.display='block';}
+    else if(rs.aPct>=15){warnEl.innerHTML=`<div class="info-box" style="background:var(--yellow-bg);border-color:var(--yellow-l);color:var(--yellow)">Caution: ${Math.round(rs.aPct)}% of the team already has approved vacation in this period.</div>`;warnEl.style.display='block';}
+    else warnEl.style.display='none';
+    saveBtn.style.display=state.selPerson?'block':'none'; clearBtn.style.display='block'; instrEl.style.display='none';
+  } else {
+    rangeEl.style.display='none'; saveBtn.style.display='none'; clearBtn.style.display=state.selStart?'block':'none';
+  }
+}
+
+function renderRightPanel(){
+  const rp=document.getElementById('rpanel'); const day=state.selectedDay;
+  if(!day){rp.innerHTML='<div class="empty-state"><div class="es-icon">&#128197;</div><div class="es-txt">Click on a day in the calendar to see availability and who is on vacation.</div></div>';return;}
+  if(isWeekend(day)){rp.innerHTML='<div class="empty-state"><div class="es-icon">&#127774;</div><div class="es-txt">Weekend. No vacation records.</div></div>';return;}
+  const stats=getDayStats(day);
+  const maxVac=Math.floor(stats.total*0.30); const remaining=maxVac-stats.approved.length;
+  rp.innerHTML=`
+    <div><div class="rpanel-title">${formatDisplay(day)}</div><div class="rpanel-date">${formatFull(day)}</div></div>
+    <div class="pct-card ${stats.availColor}">
+      <div class="avail-pct-main">${Math.round(stats.availPct)}%</div>
+      <div class="pct-lbl">disponível (todos os tipos de ausência)</div>
+      <div class="pct-avail">${stats.absentSet.size} de ${stats.total} pessoas ausentes</div>
+    </div>
+    <div class="abs-grid">
+      <div class="abs-card abs-total">
+        <div class="abs-n">${Math.round(stats.absPct)}%</div>
+        <div class="abs-l">Total<br>ausente</div>
+      </div>
+      <div class="abs-card abs-hol">
+        <div class="abs-n">${Math.round(stats.holPct)}%</div>
+        <div class="abs-l">Ausente<br>feriado</div>
+      </div>
+      <div class="abs-card abs-vac">
+        <div class="abs-n">${Math.round(stats.vacPct)}%</div>
+        <div class="abs-l">Ausente<br>férias</div>
+      </div>
+    </div>
+    <div class="summary-grid">
+      <div class="sum-card a"><div class="sum-n">${stats.approved.length}</div><div class="sum-l">Aprovado</div></div>
+      <div class="sum-card p"><div class="sum-n">${stats.pending.length}</div><div class="sum-l">Solicitado</div></div>
+    </div>
+    ${stats.approved.length?`<div class="detail-block"><div class="detail-hdr a">&#10003; Aprovado (${stats.approved.length})</div><div class="detail-body">${stats.approved.map(n=>`<div class="detail-person">${n}</div>`).join('')}</div></div>`:''}
+    ${stats.pending.length?`<div class="detail-block"><div class="detail-hdr p">&#8987; Solicitado (${stats.pending.length})</div><div class="detail-body">${stats.pending.map(n=>`<div class="detail-person">${n}</div>`).join('')}</div></div>`:''}
+    ${stats.holiday.length?`<div class="detail-block"><div class="detail-hdr" style="background:var(--gray-l);color:var(--gray)">&#9726; Feriado (${stats.holiday.length})</div><div class="detail-body">${stats.holiday.map(n=>`<div class="detail-person">${n}</div>`).join('')}</div></div>`:''}
+    ${!stats.approved.length&&!stats.pending.length&&!stats.holiday.length?'<div class="empty-state" style="padding:16px 0"><div class="es-txt">No vacation recorded for this day.</div></div>':''}
+  `;
+}
+
+function renderVacationList(){
+  const container=document.getElementById('vac-list');
+  let list=[...data.vacations];
+  if(state.filter!=='all')list=list.filter(v=>v.status===state.filter);
+  list.sort((a,b)=>a.start<b.start?-1:1);
+  if(!list.length){container.innerHTML=`<div class="vac-empty">No ${state.filter!=='all'?state.filter:''} vacations registered.</div>`;return;}
+  container.innerHTML=list.map(v=>`
+    <div class="vac-item">
+      <span class="vac-badge ${v.status}">${v.status==='approved'?'Approved':v.status==='pending'?'Pending':'Holiday'}</span>
+      <span class="vac-name">${v.name}</span>
+      <span class="vac-dates">${formatDisplay(v.start)} → ${formatDisplay(v.end)}</span>
+      <button class="vac-edit" title="Edit" onclick="editVacation('${v.id}')">&#9998;</button>
+      <button class="vac-del"  title="Remove" onclick="deleteVacation('${v.id}')">&#10005;</button>
+    </div>`).join('');
+}
+
+function renderTeamList(){
+  const wrap=document.getElementById('team-list-wrap');
+  const search=(document.getElementById('team-search-inp').value||'').toLowerCase();
+  const filtered=data.members.filter(m=>m.toLowerCase().includes(search)).sort();
+  document.getElementById('team-count-lbl').textContent=`${filtered.length} of ${data.members.length} members`;
+  wrap.innerHTML=filtered.map(m=>{
+    const ini=m.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
+    return `<div class="member-row">
+      <div class="member-avatar">${ini}</div>
+      <div class="member-name">${m}</div>
+      <button class="member-add-vac" onclick="openQuickAdd('${m.replace(/'/g,"\\'")}')">+ Vacation</button>
+      <button class="member-del" onclick="deleteMember('${m.replace(/'/g,"\\'")}')">&#10005;</button>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════
+//  INTERACTIONS
+// ═══════════════════════════════════════════════════
+function toggleMode(mode){ if(state.mode===mode)setMode('consultation'); else setMode(mode); }
+function setMode(mode){
+  state.mode=mode; state.selStart=null; state.selEnd=null; state.selPerson=''; state.selectedDay=null; renderAll();
+}
+
+function handleDayClick(dateStr){
+  if(isWeekend(dateStr))return;
+  if(state.mode==='consultation'){ state.selectedDay=dateStr; renderRightPanel(); renderCalendar(); return; }
+  if(!state.selStart||(state.selStart&&state.selEnd)){
+    state.selStart=dateStr; state.selEnd=null;
+  } else {
+    if(compareDates(dateStr,state.selStart)<0){ state.selEnd=state.selStart; state.selStart=dateStr; }
+    else if(dateStr===state.selStart){ state.selEnd=dateStr; }
+    else { state.selEnd=dateStr; }
+  }
+  state.selPerson=document.getElementById('person-sel').value;
+  updateRangeDisplay(); renderCalendar();
+}
+
+function clearSelection(){ state.selStart=null; state.selEnd=null; updateRangeDisplay(); renderCalendar(); }
+
+function saveVacation(){
+  const person=document.getElementById('person-sel').value;
+  if(!person){showToast('Please select a person.','warn');return;}
+  if(!state.selStart||!state.selEnd){showToast('Please select a period on the calendar.','warn');return;}
+  const[a,b]=compareDates(state.selStart,state.selEnd)<=0?[state.selStart,state.selEnd]:[state.selEnd,state.selStart];
+  const dup=data.vacations.find(v=>v.name===person&&((v.start<=a&&v.end>=a)||(v.start<=b&&v.end>=b)||(v.start>=a&&v.end<=b)));
+  if(dup){showToast('This person already has a vacation overlapping this period.','error');return;}
+  const vac={id:Date.now().toString(),name:person,start:a,end:b,status:state.mode==='add-approved'?'approved':state.mode==='add-pending'?'pending':'holiday'};
+  data.vacations.push(vac); saveData();
+  showToast(`${vac.status==='approved'?'Approved':vac.status==='pending'?'Pending':'Holiday'} vacation for ${person} saved!`,'success');
+  state.selStart=null; state.selEnd=null; renderAll();
+}
+
+function deleteVacation(id){
+  const v=data.vacations.find(x=>x.id===id); if(!v)return;
+  if(!confirm(`Remove vacation for ${v.name} (${formatDisplay(v.start)} → ${formatDisplay(v.end)})?`))return;
+  data.vacations=data.vacations.filter(x=>x.id!==id); saveData();
+  showToast('Vacation removed.','info'); renderAll();
+}
+
+function editVacation(id){ const v=data.vacations.find(x=>x.id===id); if(!v)return; openQuickAdd(v.name,v); }
+
+function changeMonth(delta){
+  state.month+=delta;
+  if(state.month<0){state.month=11;state.year--;}
+  if(state.month>11){state.month=0;state.year++;}
+  renderCalendar();
+}
+
+function goToday(){ const n=new Date(); state.year=n.getFullYear(); state.month=n.getMonth(); renderCalendar(); }
+function setFilter(f){
+  state.filter=f;
+  ['all','approved','pending'].forEach(id=>document.getElementById(`f-${id}`).classList.toggle('active',id===f));
+  renderVacationList();
+}
+
+// ═══════════════════════════════════════════════════
+//  TEAM MANAGEMENT
+// ═══════════════════════════════════════════════════
+function openTeamModal(){ document.getElementById('team-modal').classList.add('open'); document.getElementById('team-search-inp').value=''; renderTeamList(); }
+function closeTeamModal(){ document.getElementById('team-modal').classList.remove('open'); renderAll(); }
+
+function addMember(){
+  const inp=document.getElementById('new-member-inp'); const name=inp.value.trim();
+  if(!name){showToast('Please enter a name.','warn');return;}
+  if(data.members.includes(name)){showToast('This person is already on the team.','warn');return;}
+  data.members.push(name); saveData(); inp.value='';
+  showToast(`${name} added to the team.`,'success'); renderTeamList(); renderSidebar();
+}
+
+function deleteMember(name){
+  if(!confirm(`Remove ${name} from the team? Their registered vacations will also be removed.`))return;
+  data.members=data.members.filter(m=>m!==name);
+  data.vacations=data.vacations.filter(v=>v.name!==name);
+  saveData(); showToast(`${name} removed.`,'info');
+  renderTeamList(); renderSidebar(); renderCalendar(); renderVacationList();
+}
+
+// ═══════════════════════════════════════════════════
+//  QUICK-ADD MODAL
+// ═══════════════════════════════════════════════════
+let editingVacId=null;
+function openQuickAdd(name,existingVac){
+  editingVacId=existingVac?existingVac.id:null;
+  document.getElementById('qam-title').textContent=existingVac?`Edit Vacation — ${name}`:`Add Vacation — ${name}`;
+  document.getElementById('qam-person').value=name;
+  const statusSel=document.getElementById('qam-status');
+  const saveBtn=document.getElementById('qam-save-btn');
+  document.getElementById('qam-warn').innerHTML='';
+  if(existingVac){ statusSel.value=existingVac.status; document.getElementById('qam-start').value=existingVac.start; document.getElementById('qam-end').value=existingVac.end; saveBtn.textContent='Update Vacation'; }
+  else { statusSel.value='approved'; document.getElementById('qam-start').value=''; document.getElementById('qam-end').value=''; saveBtn.textContent='Save Vacation'; }
+  statusSel.onchange=()=>{ saveBtn.className=`btn-save ${statusSel.value}`; saveBtn.textContent=(editingVacId?'Update':'Save')+' Vacation'; };
+  saveBtn.className=`btn-save ${statusSel.value}`;
+  document.getElementById('quick-add-modal').classList.add('open');
+}
+function closeQuickAdd(){ document.getElementById('quick-add-modal').classList.remove('open'); editingVacId=null; }
+
+function saveQuickAdd(){
+  const name=document.getElementById('qam-person').value;
+  const status=document.getElementById('qam-status').value;
+  const start=document.getElementById('qam-start').value;
+  const end=document.getElementById('qam-end').value;
+  const warn=document.getElementById('qam-warn');
+  warn.innerHTML='';
+  if(!start||!end){warn.innerHTML='<div class="warn-box">Please fill in the start and end dates.</div>';return;}
+  if(start>end){warn.innerHTML='<div class="warn-box">The start date must be before the end date.</div>';return;}
+  const dup=data.vacations.find(v=>v.name===name&&v.id!==editingVacId&&((v.start<=start&&v.end>=start)||(v.start<=end&&v.end>=end)||(v.start>=start&&v.end<=end)));
+  if(dup){warn.innerHTML='<div class="warn-box">This person already has a vacation overlapping this period.</div>';return;}
+  if(editingVacId){
+    const idx=data.vacations.findIndex(v=>v.id===editingVacId);
+    if(idx!==-1)data.vacations[idx]={id:editingVacId,name,start,end,status};
+    showToast('Vacation updated!','success');
+  } else {
+    data.vacations.push({id:Date.now().toString(),name,start,end,status});
+    showToast(`Vacation for ${name} saved!`,'success');
+  }
+  saveData(); closeQuickAdd(); renderAll();
+}
+
+// ═══════════════════════════════════════════════════
+//  TOAST
+// ═══════════════════════════════════════════════════
+let toastTimer=null;
+function showToast(msg,type='info'){
+  const t=document.getElementById('toast'); t.textContent=msg; t.className=`toast ${type} show`;
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>{t.className=`toast ${type}`;},3000);
+}
+
+// ═══════════════════════════════════════════════════
+//  EVENT LISTENERS
+// ═══════════════════════════════════════════════════
+document.addEventListener('change',e=>{
+  if(e.target.id==='person-sel'){state.selPerson=e.target.value;updateRangeDisplay();}
+});
+document.getElementById('team-modal').addEventListener('click',e=>{if(e.target===document.getElementById('team-modal'))closeTeamModal();});
+document.getElementById('quick-add-modal').addEventListener('click',e=>{if(e.target===document.getElementById('quick-add-modal'))closeQuickAdd();});
+document.getElementById('db-modal').addEventListener('click',e=>{if(e.target===document.getElementById('db-modal'))closeDbConfig();});
+
+// ═══════════════════════════════════════════════════
+//  RENDER ALL & INIT
+// ═══════════════════════════════════════════════════
+function renderAll(){ renderSidebar(); renderCalendar(); renderVacationList(); if(state.selectedDay)renderRightPanel(); }
+
+(async function init(){
+  // Use preset credentials — no manual setup needed
+  cfg.binId  = PRESET_BIN_ID  || localStorage.getItem(LS_BIN)  || '';
+  cfg.apiKey = PRESET_API_KEY || localStorage.getItem(LS_KEY) || '';
+
+  // Persist to localStorage so the session stays connected
+  if(PRESET_BIN_ID && PRESET_API_KEY){
+    localStorage.setItem(LS_BIN, PRESET_BIN_ID);
+    localStorage.setItem(LS_KEY, PRESET_API_KEY);
+  }
+
+  const now=new Date(); state.year=now.getFullYear(); state.month=now.getMonth();
+
+  // Always hide the config banner — credentials are pre-configured
+  document.getElementById('db-banner').style.display='none';
+
+  const ok = await cloudGet();
+  if(!ok){
+    data = loadLocal() || { members:[...INITIAL_MEMBERS], vacations:[...INITIAL_VACATIONS], _v: DATA_VER };
+    setDbStatus(false);
+  } else {
+    // ── MERGE INITIAL DATA IF CLOUD IS OUTDATED ──────────────────────────────
+    // Compares the cloud data version (_v) with DATA_VER.
+    // If the cloud is behind, merges missing members and vacations, then pushes.
+    // Stored in the cloud itself — works for every browser automatically.
+    if(!data._v || data._v < DATA_VER){
+      // REPLACE all data with fresh INITIAL data (version bump resets to clean state)
+      data.members  = [...INITIAL_MEMBERS];
+      data.vacations = INITIAL_VACATIONS.map(iv => ({...iv, id: uid()}));
+      data._v = DATA_VER;
+      await cloudPut();
+      showToast(`Database refreshed: ${data.vacations.length} records loaded from spreadsheet.`, 'success');
+    }
+    // ── END MERGE ─────────────────────────────────────────────────────────────
+  }
+
+  renderAll();
+  // Auto-refresh every 30s
+  setInterval(()=>{ if(cfg.binId&&cfg.apiKey)cloudGet().then(ok=>{if(ok)renderAll();}); },30000);
+})();
+
+// ═══════════════════════════════════════════════════
+//  ASM SEARCH
+// ═══════════════════════════════════════════════════
+function openAsmModal(){
+  document.getElementById('asm-modal').classList.add('open');
+  setTimeout(()=>document.getElementById('asm-search-inp').focus(),80);
+}
+function closeAsmModal(){
+  document.getElementById('asm-modal').classList.remove('open');
+  document.getElementById('asm-search-inp').value='';
+  document.getElementById('asm-dropdown').innerHTML='';
+  document.getElementById('asm-results').innerHTML=
+    '<div class="asm-empty" style="padding:32px 0">Digite o nome de um membro para ver seu calendário completo.</div>';
+}
+function handleAsmOverlayClick(e){
+  if(e.target===document.getElementById('asm-modal'))closeAsmModal();
+}
+function onAsmSearch(){
+  const q=document.getElementById('asm-search-inp').value.toLowerCase().trim();
+  const dd=document.getElementById('asm-dropdown');
+  if(!q){dd.innerHTML='';return;}
+  const matches=[...data.members].sort().filter(m=>m.toLowerCase().includes(q)).slice(0,8);
+  if(!matches.length){dd.innerHTML='<div class="asm-dd-item asm-dd-empty">Nenhum resultado encontrado.</div>';return;}
+  dd.innerHTML=matches.map(m=>`<div class="asm-dd-item" onclick="selectAsm('${m.replace(/'/g,"\\'").replace(/"/g,'&quot;')}')">${m}</div>`).join('');
+}
+function selectAsm(name){
+  document.getElementById('asm-search-inp').value=name;
+  document.getElementById('asm-dropdown').innerHTML='';
+  renderAsmResults(name);
+}
+function asmCountDays(arr){
+  return arr.reduce((sum,v)=>{
+    const s=parseISO(v.start),e=parseISO(v.end);
+    let cur=new Date(s.y,s.m,s.d),last=new Date(e.y,e.m,e.d),days=0;
+    while(cur<=last){days++;cur.setDate(cur.getDate()+1);}
+    return sum+days;
+  },0);
+}
+function asmRangeLabel(v){
+  return v.start===v.end
+    ? formatDisplay(v.start)
+    : `${formatDisplay(v.start)} &rarr; ${formatDisplay(v.end)}`;
+}
+function asmSection(title,items,cls){
+  if(!items.length)return '';
+  const totalDays=asmCountDays(items);
+  const rows=items.map(v=>{
+    const days=asmCountDays([v]);
+    return `<div class="asm-entry ${cls}">
+      <span class="asm-entry-dates">${asmRangeLabel(v)}</span>
+      <span class="asm-entry-days">${days} dia${days!==1?'s':''}</span>
+    </div>`;
+  }).join('');
+  return `<div class="asm-section">
+    <div class="asm-section-hdr ${cls}">${title} &mdash; ${items.length} período${items.length!==1?'s':''} &bull; ${totalDays} dia${totalDays!==1?'s':''}</div>
+    <div>${rows}</div>
+  </div>`;
+}
+function renderAsmResults(name){
+  const all=data.vacations.filter(v=>v.name===name).sort((a,b)=>a.start<b.start?-1:1);
+  const approved=all.filter(v=>v.status==='approved');
+  const pending =all.filter(v=>v.status==='pending');
+  const holiday =all.filter(v=>v.status==='holiday');
+  const dApproved=asmCountDays(approved);
+  const dPending =asmCountDays(pending);
+  const dHoliday =asmCountDays(holiday);
+  const ini=name.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
+  document.getElementById('asm-results').innerHTML=`
+    <div class="asm-person-hdr">
+      <div class="asm-avatar">${ini}</div>
+      <div class="asm-person-info">
+        <div class="asm-person-name">${name}</div>
+        <div class="asm-person-sub">
+          <span class="asm-count-badge approved">&#10003; ${approved.length} aprovado${approved.length!==1?'s':''}</span>
+          <span class="asm-count-badge pending">&#8987; ${pending.length} pendente${pending.length!==1?'s':''}</span>
+          <span class="asm-count-badge holiday">&#9726; ${holiday.length} feriado${holiday.length!==1?'s':''}</span>
+        </div>
+      </div>
+    </div>
+    <div class="asm-totals-row">
+      <div class="asm-total-card a">
+        <div class="asm-total-n">${dApproved}</div>
+        <div class="asm-total-l">dias aprovados</div>
+      </div>
+      <div class="asm-total-card p">
+        <div class="asm-total-n">${dPending}</div>
+        <div class="asm-total-l">dias solicitados</div>
+      </div>
+      <div class="asm-total-card h">
+        <div class="asm-total-n">${dHoliday}</div>
+        <div class="asm-total-l">dias de feriado</div>
+      </div>
+    </div>
+    ${asmSection('Férias Aprovadas',approved,'a')}
+    ${asmSection('Férias Solicitadas',pending,'p')}
+    ${asmSection('Feriados',holiday,'h')}
+    ${!all.length?'<div class="asm-empty">Nenhum registro encontrado para este membro.</div>':''}
+  `;
+}
+</script>
+</body>
+</html>
