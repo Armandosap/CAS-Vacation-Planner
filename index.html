@@ -255,7 +255,7 @@ code{background:var(--bg3);padding:2px 6px;border-radius:3px;font-size:11px;font
     <button class="hdr-btn hdr-btn-pending"  id="hdr-btn-pending"  onclick="toggleMode('add-pending')">+ Add Pending</button>
     <button class="hdr-btn hdr-btn-holiday"  id="hdr-btn-holiday"  onclick="toggleMode('add-holiday')">+ Add Holiday</button>
     <button class="hdr-btn" onclick="openTeamModal()">&#9881; Manage Team</button>
-    <button class="hdr-btn" id="hdr-btn-asm-search" onclick="openAsmModal()" style="background:rgba(255,255,255,.25);border-color:rgba(255,255,255,.6)">&#128269; Buscar ASM</button>
+    <button class="hdr-btn" id="hdr-btn-asm-search" onclick="openAsmModal()" style="background:rgba(255,255,255,.25);border-color:rgba(255,255,255,.6)">&#128269; Search ASM</button>
   </div>
 </div>
 
@@ -281,16 +281,16 @@ code{background:var(--bg3);padding:2px 6px;border-radius:3px;font-size:11px;font
       </div>
     </div>
     <div class="sb-sec">
-      <div class="sb-title">Legenda — Disponibilidade</div>
-      <div class="leg-row"><div class="dot g"></div> Disponível — menos de 15% ausente</div>
-      <div class="leg-row"><div class="dot y"></div> Atenção — entre 15% e 29% ausente</div>
-      <div class="leg-row"><div class="dot r"></div> Bloqueado — 30% ou mais ausente</div>
-      <div style="font-size:10px;color:var(--text2);margin-top:4px;line-height:1.5">(feriados + férias inclusos)</div>
+      <div class="sb-title">Legend — Availability</div>
+      <div class="leg-row"><div class="dot g"></div> Available — less than 15% absent</div>
+      <div class="leg-row"><div class="dot y"></div> Caution — between 15% and 29% absent</div>
+      <div class="leg-row"><div class="dot r"></div> Blocked — 30% or more absent</div>
+      <div style="font-size:10px;color:var(--text2);margin-top:4px;line-height:1.5">(holidays + vacations included)</div>
       <div class="divider"></div>
-      <div class="sb-title" style="margin-bottom:6px">Tipos de ausência</div>
-      <div class="leg-row"><div class="dot g"></div> Férias aprovadas</div>
-      <div class="leg-row"><div class="dot" style="background:var(--yellow);width:10px;height:10px;border-radius:50%;flex-shrink:0"></div> Férias solicitadas</div>
-      <div class="leg-row"><div class="dot" style="background:var(--gray);width:10px;height:10px;border-radius:50%;flex-shrink:0"></div> Feriado</div>
+      <div class="sb-title" style="margin-bottom:6px">Absence Types</div>
+      <div class="leg-row"><div class="dot g"></div> Approved Vacation</div>
+      <div class="leg-row"><div class="dot" style="background:var(--yellow);width:10px;height:10px;border-radius:50%;flex-shrink:0"></div> Requested Vacation</div>
+      <div class="leg-row"><div class="dot" style="background:var(--gray);width:10px;height:10px;border-radius:50%;flex-shrink:0"></div> Holiday</div>
     </div>
     <div class="sb-sec" id="add-panel" style="display:none">
       <div class="sb-title" id="add-panel-title">Add Approved Vacation</div>
@@ -355,19 +355,19 @@ code{background:var(--bg3);padding:2px 6px;border-radius:3px;font-size:11px;font
 <div class="overlay" id="asm-modal" onclick="handleAsmOverlayClick(event)">
   <div class="modal" style="width:580px;max-height:82vh;overflow-y:auto" onclick="event.stopPropagation()">
     <div class="modal-hdr">
-      <div class="modal-title">&#128269; Buscar ASM — Calendário Individual</div>
+      <div class="modal-title">&#128269; Search ASM — Individual Calendar</div>
       <button class="modal-x" onclick="closeAsmModal()">&#215;</button>
     </div>
     <div class="asm-search-wrap">
       <input type="text" id="asm-search-inp" class="form-inp"
-        placeholder="Digite o nome do ASM..."
+        placeholder="Type the ASM's name..."
         oninput="onAsmSearch()" autocomplete="off"
         style="margin-bottom:0">
       <div id="asm-dropdown" class="asm-dropdown"></div>
     </div>
     <div id="asm-results">
       <div class="asm-empty" style="padding:32px 0">
-        Digite o nome de um membro para ver seu calendário completo.
+        Type a member's name to see their full calendar.
       </div>
     </div>
   </div>
@@ -743,20 +743,20 @@ function renderCalendar(){
         // Main: overall availability %
         const bMain=document.createElement('span');
         bMain.className=`badge ${stats.availColor}`;
-        bMain.textContent=`${Math.round(stats.availPct)}% disp.`;
+        bMain.textContent=`${Math.round(stats.availPct)}% avail.`;
         badges.appendChild(bMain);
         // Holiday breakdown
         if(stats.holiday.length){
           const bH=document.createElement('span');
           bH.className='badge hol';
-          bH.textContent=`${Math.round(stats.holPct)}% fer.`;
+          bH.textContent=`${Math.round(stats.holPct)}% hol.`;
           badges.appendChild(bH);
         }
         // Vacation breakdown
         if(stats.approved.length||stats.pending.length){
           const bV=document.createElement('span');
           bV.className='badge vac-badge-sm';
-          bV.textContent=`${Math.round(stats.vacPct)}% fér.`;
+          bV.textContent=`${Math.round(stats.vacPct)}% vac.`;
           badges.appendChild(bV);
         }
         dayEl.appendChild(badges);
@@ -843,30 +843,30 @@ function renderRightPanel(){
     <div><div class="rpanel-title">${formatDisplay(day)}</div><div class="rpanel-date">${formatFull(day)}</div></div>
     <div class="pct-card ${stats.availColor}">
       <div class="avail-pct-main">${Math.round(stats.availPct)}%</div>
-      <div class="pct-lbl">disponível (todos os tipos de ausência)</div>
-      <div class="pct-avail">${stats.absentSet.size} de ${stats.total} pessoas ausentes</div>
+      <div class="pct-lbl">available (all absence types)</div>
+      <div class="pct-avail">${stats.absentSet.size} of ${stats.total} people absent</div>
     </div>
     <div class="abs-grid">
       <div class="abs-card abs-total">
         <div class="abs-n">${Math.round(stats.absPct)}%</div>
-        <div class="abs-l">Total<br>ausente</div>
+        <div class="abs-l">Total<br>absent</div>
       </div>
       <div class="abs-card abs-hol">
         <div class="abs-n">${Math.round(stats.holPct)}%</div>
-        <div class="abs-l">Ausente<br>feriado</div>
+        <div class="abs-l">Holiday<br>absent</div>
       </div>
       <div class="abs-card abs-vac">
         <div class="abs-n">${Math.round(stats.vacPct)}%</div>
-        <div class="abs-l">Ausente<br>férias</div>
+        <div class="abs-l">Vacation<br>absent</div>
       </div>
     </div>
     <div class="summary-grid">
-      <div class="sum-card a"><div class="sum-n">${stats.approved.length}</div><div class="sum-l">Aprovado</div></div>
-      <div class="sum-card p"><div class="sum-n">${stats.pending.length}</div><div class="sum-l">Solicitado</div></div>
+      <div class="sum-card a"><div class="sum-n">${stats.approved.length}</div><div class="sum-l">Approved</div></div>
+      <div class="sum-card p"><div class="sum-n">${stats.pending.length}</div><div class="sum-l">Requested</div></div>
     </div>
-    ${stats.approved.length?`<div class="detail-block"><div class="detail-hdr a">&#10003; Aprovado (${stats.approved.length})</div><div class="detail-body">${stats.approved.map(n=>`<div class="detail-person">${n}</div>`).join('')}</div></div>`:''}
-    ${stats.pending.length?`<div class="detail-block"><div class="detail-hdr p">&#8987; Solicitado (${stats.pending.length})</div><div class="detail-body">${stats.pending.map(n=>`<div class="detail-person">${n}</div>`).join('')}</div></div>`:''}
-    ${stats.holiday.length?`<div class="detail-block"><div class="detail-hdr" style="background:var(--gray-l);color:var(--gray)">&#9726; Feriado (${stats.holiday.length})</div><div class="detail-body">${stats.holiday.map(n=>`<div class="detail-person">${n}</div>`).join('')}</div></div>`:''}
+    ${stats.approved.length?`<div class="detail-block"><div class="detail-hdr a">&#10003; Approved (${stats.approved.length})</div><div class="detail-body">${stats.approved.map(n=>`<div class="detail-person">${n}</div>`).join('')}</div></div>`:''}
+    ${stats.pending.length?`<div class="detail-block"><div class="detail-hdr p">&#8987; Requested (${stats.pending.length})</div><div class="detail-body">${stats.pending.map(n=>`<div class="detail-person">${n}</div>`).join('')}</div></div>`:''}
+    ${stats.holiday.length?`<div class="detail-block"><div class="detail-hdr" style="background:var(--gray-l);color:var(--gray)">&#9726; Holiday (${stats.holiday.length})</div><div class="detail-body">${stats.holiday.map(n=>`<div class="detail-person">${n}</div>`).join('')}</div></div>`:''}
     ${!stats.approved.length&&!stats.pending.length&&!stats.holiday.length?'<div class="empty-state" style="padding:16px 0"><div class="es-txt">No vacation recorded for this day.</div></div>':''}
   `;
 }
@@ -1103,7 +1103,7 @@ function closeAsmModal(){
   document.getElementById('asm-search-inp').value='';
   document.getElementById('asm-dropdown').innerHTML='';
   document.getElementById('asm-results').innerHTML=
-    '<div class="asm-empty" style="padding:32px 0">Digite o nome de um membro para ver seu calendário completo.</div>';
+    '<div class="asm-empty" style="padding:32px 0">Type a member\'s name to see their full calendar.</div>';
 }
 function handleAsmOverlayClick(e){
   if(e.target===document.getElementById('asm-modal'))closeAsmModal();
@@ -1113,7 +1113,7 @@ function onAsmSearch(){
   const dd=document.getElementById('asm-dropdown');
   if(!q){dd.innerHTML='';return;}
   const matches=[...data.members].sort().filter(m=>m.toLowerCase().includes(q)).slice(0,8);
-  if(!matches.length){dd.innerHTML='<div class="asm-dd-item asm-dd-empty">Nenhum resultado encontrado.</div>';return;}
+  if(!matches.length){dd.innerHTML='<div class="asm-dd-item asm-dd-empty">No results found.</div>';return;}
   dd.innerHTML=matches.map(m=>`<div class="asm-dd-item" onclick="selectAsm('${m.replace(/'/g,"\\'").replace(/"/g,'&quot;')}')">${m}</div>`).join('');
 }
 function selectAsm(name){
@@ -1145,7 +1145,7 @@ function asmSection(title,items,cls){
     </div>`;
   }).join('');
   return `<div class="asm-section">
-    <div class="asm-section-hdr ${cls}">${title} &mdash; ${items.length} período${items.length!==1?'s':''} &bull; ${totalDays} dia${totalDays!==1?'s':''}</div>
+    <div class="asm-section-hdr ${cls}">${title} &mdash; ${items.length} period${items.length!==1?'s':''} &bull; ${totalDays} day${totalDays!==1?'s':''}</div>
     <div>${rows}</div>
   </div>`;
 }
@@ -1164,30 +1164,30 @@ function renderAsmResults(name){
       <div class="asm-person-info">
         <div class="asm-person-name">${name}</div>
         <div class="asm-person-sub">
-          <span class="asm-count-badge approved">&#10003; ${approved.length} aprovado${approved.length!==1?'s':''}</span>
-          <span class="asm-count-badge pending">&#8987; ${pending.length} pendente${pending.length!==1?'s':''}</span>
-          <span class="asm-count-badge holiday">&#9726; ${holiday.length} feriado${holiday.length!==1?'s':''}</span>
+          <span class="asm-count-badge approved">&#10003; ${approved.length} approved</span>
+          <span class="asm-count-badge pending">&#8987; ${pending.length} pending</span>
+          <span class="asm-count-badge holiday">&#9726; ${holiday.length} holiday</span>
         </div>
       </div>
     </div>
     <div class="asm-totals-row">
       <div class="asm-total-card a">
         <div class="asm-total-n">${dApproved}</div>
-        <div class="asm-total-l">dias aprovados</div>
+        <div class="asm-total-l">approved days</div>
       </div>
       <div class="asm-total-card p">
         <div class="asm-total-n">${dPending}</div>
-        <div class="asm-total-l">dias solicitados</div>
+        <div class="asm-total-l">requested days</div>
       </div>
       <div class="asm-total-card h">
         <div class="asm-total-n">${dHoliday}</div>
-        <div class="asm-total-l">dias de feriado</div>
+        <div class="asm-total-l">holiday days</div>
       </div>
     </div>
-    ${asmSection('Férias Aprovadas',approved,'a')}
-    ${asmSection('Férias Solicitadas',pending,'p')}
-    ${asmSection('Feriados',holiday,'h')}
-    ${!all.length?'<div class="asm-empty">Nenhum registro encontrado para este membro.</div>':''}
+    ${asmSection('Approved Vacations',approved,'a')}
+    ${asmSection('Requested Vacations',pending,'p')}
+    ${asmSection('Holidays',holiday,'h')}
+    ${!all.length?'<div class="asm-empty">No records found for this member.</div>':''}
   `;
 }
 </script>
