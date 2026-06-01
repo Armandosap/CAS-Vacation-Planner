@@ -337,7 +337,10 @@ code{background:var(--bg3);padding:2px 6px;border-radius:3px;font-size:11px;font
           <button class="filter-btn"        id="f-pending"  onclick="setFilter('pending')">Pending</button>
         </div>
       </div>
-      <div id="vac-list" style="overflow-y:scroll;height:190px"></div>
+      <div style="padding:8px 16px 6px;border-bottom:1px solid var(--border)">
+        <input type="text" id="vac-search-inp" class="form-inp" placeholder="&#128269; Search by name..." oninput="renderVacationList()" style="margin-bottom:0">
+      </div>
+      <div id="vac-list" style="overflow-y:scroll;height:166px"></div>
     </div>
   </div>
 
@@ -873,10 +876,12 @@ function renderRightPanel(){
 
 function renderVacationList(){
   const container=document.getElementById('vac-list');
+  const search=(document.getElementById('vac-search-inp')?.value||'').toLowerCase().trim();
   let list=[...data.vacations];
   if(state.filter!=='all')list=list.filter(v=>v.status===state.filter);
+  if(search)list=list.filter(v=>v.name.toLowerCase().includes(search));
   list.sort((a,b)=>a.start<b.start?-1:1);
-  if(!list.length){container.innerHTML=`<div class="vac-empty">No ${state.filter!=='all'?state.filter:''} vacations registered.</div>`;return;}
+  if(!list.length){container.innerHTML=`<div class="vac-empty">No ${search?`results for "${search}"`:state.filter!=='all'?state.filter:''} vacations registered.</div>`;return;}
   container.innerHTML=list.map(v=>`
     <div class="vac-item">
       <span class="vac-badge ${v.status}">${v.status==='approved'?'Approved':v.status==='pending'?'Pending':'Holiday'}</span>
